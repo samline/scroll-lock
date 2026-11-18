@@ -1,0 +1,91 @@
+{
+  "name": "@samline/scroll-lock",
+  "version": "1.0.0",
+  "description": "Page scroll locking for modals, drawers and menus: nested locks, scrollbar gap compensation, scroll position restoration and the iOS Safari workaround, for vanilla JavaScript, any framework and plain HTML.",
+  "keywords": [
+    "scroll-lock",
+    "body-scroll-lock",
+    "prevent-scroll",
+    "disable-scroll",
+    "modal",
+    "drawer",
+    "ios-safari",
+    "scrollbar"
+  ],
+  "author": "Samuel Olvera (samline)",
+  "license": "MIT",
+  "homepage": "https://samline.github.io/scroll-lock/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samline/scroll-lock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samline/scroll-lock/issues"
+  },
+  "type": "module",
+  "sideEffects": [
+    "./dist/browser/scroll-lock.global.js"
+  ],
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@12.9.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/browser/scroll-lock.global.js",
+  "jsdelivr": "./dist/browser/scroll-lock.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./vanilla": {
+      "types": "./dist/vanilla/index.d.ts",
+      "import": "./dist/vanilla/index.js",
+      "require": "./dist/vanilla/index.cjs"
+    },
+    "./browser": "./dist/browser/scroll-lock.global.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist coverage",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "size": "node scripts/check-size.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "bun run format:check && bun run typecheck && bun run test:coverage && bun run build && bun run size && bun run test:e2e",
+    "prepublishOnly": "bun run clean && bun run build && bun run typecheck && bun run test:coverage",
+    "release": "bun run check && pnpm publish"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@samline/internal": "^1.0.0",
+    "@types/node": "^24.13.5",
+    "@vitest/coverage-v8": "^5.0.1",
+    "esbuild": "^0.28.2",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.9.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  },
+  "size": {
+    "./dist/index.js": 4000,
+    "./dist/browser/scroll-lock.global.js": 4100
+  }
+}

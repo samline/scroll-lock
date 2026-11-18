@@ -1,0 +1,35 @@
+# @samline/scroll-lock
+
+Page scroll locking for modals, drawers and menus: nested locks, scrollbar gap compensation, scroll position restoration and the iOS Safari workaround, for vanilla JavaScript, any framework and plain HTML.
+
+Package memory: decisions and lessons specific to this package. Family rules are in the block below.
+
+- Successor of the archived `samline/disable-scroll.js` (2019). The engine was extracted from `@samline/drawer` 6.0.1 (`src/runtime/scroll-lock.ts`); drawer still carries its own copy and only moves to this package when the maintainer decides so.
+- The iOS workaround and the `position: fixed` pin are adapted from vaul (MIT) and React Spectrum's `usePreventScroll` (Apache-2.0). Keep the `/*! … */` notice in `src/vanilla/ios.ts` and the third-party section of `LICENSE.md` with any change to that code.
+- Every page-level effect (state attribute, overflow, iOS workaround, pin) is reference counted on its own: the first lock applies it, the last release undoes it. A release runs in reverse order, so the iOS workaround scrolls back before the pin restores its position.
+- Scroll restoration uses `scrollTo({ behavior: 'instant' })`, so a page with `scroll-behavior: smooth` does not animate back. jsdom does not implement `scrollTo`; unit tests stub it.
+- Overflow lives on `<html>`, not `<body>`: a page that sets `overflow` on `<html>` would otherwise keep scrolling, and `<body>` overflow changes margin collapsing when `<html>` is not `visible`.
+- The website is embedded from package-landing-docs (`landing/`, `docs/`, `shared/`, `site-tools/`); `site/` holds this package's previews and copyable examples.
+
+<!-- samline:family:start -->
+
+## Family conventions (@samline)
+
+This block is synced from the template that owns the family conventions ([package-landing-docs](https://github.com/samline/package-landing-docs) `family/AGENTS.md`, `node family/scripts/sync.mjs`). Do not edit it here; change the template and re-sync. The skill `.agents/skills/samline-package/SKILL.md` carries the full rules for a repository cloned on its own.
+
+- One package per repository. Framework-agnostic core in JS/CSS/HTML; adapters only when idiomatic, as optional peers.
+- No DOM access at import time; without a DOM, calls are no-ops. Respect `prefers-reduced-motion`; content stays visible without JavaScript.
+- Arrow functions and closures, no classes or `this`. `destroy()` is idempotent and restores markup.
+- Zero runtime dependencies: shared primitives (`@samline/internal`, `@samline/is-visible`, `@samline/debounce`) are devDependencies bundled with `noExternal`.
+- Install with pnpm, run with Bun: `pnpm install` / `pnpm add -D` (only `pnpm-lock.yaml` is committed), `bun run <script>` for everything else. Never `bun install`, `bun add`, `npm install` or `yarn`.
+- Packages talk through npm only: install the published version of any sibling package. Never link or import a local checkout (`bun link`, `link:`, `file:`, path aliases, `../other-package/src`).
+- Layout: `src/core`, `src/vanilla`, `src/browser/global.ts` (`window.<PascalName>`, or a plain non-colliding name such as `Strings` when that is a built-in, never a `Samline` prefix; `dist/browser/<name>.global.js`), side-effect-free `src/index.ts`. Every public entry has a gzip budget in `package.json` → `size`.
+- `bun run check` must pass: format, typecheck, unit tests with coverage thresholds, build, size budgets, e2e in Chromium, Firefox and WebKit.
+- README is the package guide and the site's source of truth; public text in English. Any public API change updates tests, README, docs, examples and `skills/<name>/SKILL.md` together.
+- Releases: Keep a Changelog entry for every user-facing change, semver, pinned CDN URLs bumped before release. Publishing is manual (`bun run release` by the maintainer); CI never publishes; no `--provenance`.
+- Public repository: no dated reports, handoff notes, transcripts or client names; private notes go in the ignored `.local/`. Site examples with state offer Reset; icons are SVG, never Unicode glyphs.
+- Work skills: `npx autoskills -y -a universal`, tracked with `skills-lock.json`, minus the `bun` skill (it contradicts pnpm installs), plus `modern-web-guidance`, consulted before HTML, CSS or client-side JavaScript work.
+- Always explore code through the `codebase-memory` skill and graph when `codebase-memory-mcp` is installed; read source for gaps.
+- Never add AI attribution to commits, tags or pull requests.
+
+<!-- samline:family:end -->

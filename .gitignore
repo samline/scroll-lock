@@ -1,0 +1,34 @@
+# Managed by package-landing-docs (family/templates/package). Edit there, then run node family/scripts/sync.mjs.
+node_modules/
+dist/
+coverage/
+.astro/
+.vite/
+.cache/
+*.tsbuildinfo
+*.tgz
+
+# Installs use pnpm only (pnpm-lock.yaml). Lockfiles of other package
+# managers are never committed.
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock
+
+# Browser-test output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Local environment, logs, OS metadata and per-machine agent config
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.claude/settings.local.json
+.claude/launch.json
+
+# Private working notes (client migrations, drafts, reports) never leave the machine
+.local/
