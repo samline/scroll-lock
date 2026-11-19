@@ -1,0 +1,40 @@
+---
+import './_shared.css'
+---
+
+<div class="preview scroll-lock-example">
+  <div class="controls">
+    <button type="button" class="pill" data-open>Read the terms</button>
+    <output aria-live="polite">Page scrolls</output>
+  </div>
+  <dialog data-preview="dialog" aria-labelledby="scroll-lock-terms-title">
+    <p class="part-title" id="scroll-lock-terms-title">Terms</p>
+    <div class="list" tabindex="0" aria-label="Clauses">
+      {Array.from({ length: 12 }, (_, i) => <p>Clause {i + 1}. This list scrolls; the page behind it does not.</p>)}
+    </div>
+    <form method="dialog"><button class="pill">Close</button></form>
+  </dialog>
+</div>
+
+<script>
+  import { isScrollLocked, scrollLock } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('dialog', stage => {
+    const dialog = stage.querySelector<HTMLDialogElement>('[data-preview="dialog"]')!
+    const output = stage.querySelector('output')!
+    const open = () => dialog.showModal()
+    const report = () => {
+      output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
+    }
+    const controller = scrollLock(dialog)
+    const observer = new MutationObserver(report)
+    observer.observe(dialog, { attributes: true, attributeFilter: ['data-scroll-lock-state'] })
+    stage.querySelector('[data-open]')!.addEventListener('click', open)
+    return () => {
+      observer.disconnect()
+      dialog.close()
+      controller.destroy()
+    }
+  })
+</script>

@@ -1,0 +1,143 @@
+{
+  "status": "verified",
+  "packageVersion": "1.0.0",
+  "capabilityReview": {
+    "status": "verified",
+    "integrations": [
+      {
+        "name": "Package / ESM and CommonJS",
+        "evidence": "package.json exports",
+        "destination": "docs/src/content/docs/getting-started.mdx",
+        "reviewed": true
+      },
+      {
+        "name": "HTML / CDN (window.ScrollLock)",
+        "evidence": "src/browser/global.ts",
+        "destination": "docs/src/content/docs/getting-started.mdx",
+        "reviewed": true
+      },
+      {
+        "name": "React, Vue, Svelte and Astro",
+        "evidence": "lockScroll release and autoScrollLock().destroy",
+        "destination": "docs/src/content/docs/guides/frameworks.md",
+        "reviewed": true
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "Modal dialog with data-scroll-lock",
+        "evidence": "test/watch.test.ts, tests/e2e/scroll-lock.spec.ts, tests/e2e/examples.spec.ts",
+        "destination": "site/examples/dialog.astro",
+        "reviewed": true
+      },
+      {
+        "name": "Nested locks released in any order",
+        "evidence": "test/lock.test.ts (nesting), tests/e2e/scroll-lock.spec.ts, tests/e2e/examples.spec.ts",
+        "destination": "site/examples/nested.astro",
+        "reviewed": true
+      },
+      {
+        "name": "Popover menu",
+        "evidence": "test/watch.test.ts (popover toggle), tests/e2e/examples.spec.ts",
+        "destination": "site/examples/popover.astro",
+        "reviewed": true
+      }
+    ],
+    "onboarding": {
+      "equivalentModes": true
+    }
+  },
+  "themeReview": {
+    "status": "verified",
+    "source": "Blue (#2563eb), a hue no sibling site uses, proposed for the first release and derived with bun run site:accent (dark accent raised to #8aabf6 for code-block contrast); the maintainer may pick another before publishing.",
+    "accentLight": "#2563eb",
+    "accentDark": "#8aabf6"
+  },
+  "sources": [
+    {
+      "source": "README.md",
+      "sha256": "7938753f28189440894d8226103cf04cc780c5d5ca1029b19146334110964220",
+      "destination": "docs/src/content/docs/index.mdx",
+      "reviewed": true
+    },
+    {
+      "source": "README.md",
+      "sha256": "7938753f28189440894d8226103cf04cc780c5d5ca1029b19146334110964220",
+      "destination": "docs/src/content/docs/getting-started.mdx",
+      "reviewed": true
+    },
+    {
+      "source": "src/browser/global.ts",
+      "sha256": "992657b50b26a5b98b13d216ba4130c52950e286f8eb0edafc1fae020c67187e",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/index.ts",
+      "sha256": "db3e8a5b0cd814416b610944ca297e380094723d5a99e0bc9ce852d7de35f943",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/index.ts",
+      "sha256": "c267cf560fecbc9cca06b671c8a4eadaf15ed71902cc9f1271eb1b5b19054ca5",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/core/index.ts",
+      "sha256": "da85fd9b8f575afc067554b6897156dca0a0a90b85e98f6fd7e800f8bbfd6e84",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/lock.ts",
+      "sha256": "e19766f4c6b00d8d5f196573dc6024ced849b521cdd74d72461a633e8c844969",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/watch.ts",
+      "sha256": "96ba7724cc3e2691ddad5df0214984f0eb9a7f5747f3a9b4d75aa2425c7adfb3",
+      "destination": "docs/src/content/docs/reference/api.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/core/scroll-lock.ts",
+      "sha256": "71513739bf5635fa34fd7442a3c33c5e10c8046b243a0359ae5982f658eedc52",
+      "destination": "docs/src/content/docs/reference/configuration.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/watch.ts",
+      "sha256": "96ba7724cc3e2691ddad5df0214984f0eb9a7f5747f3a9b4d75aa2425c7adfb3",
+      "destination": "docs/src/content/docs/reference/configuration.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/lock.ts",
+      "sha256": "e19766f4c6b00d8d5f196573dc6024ced849b521cdd74d72461a633e8c844969",
+      "destination": "docs/src/content/docs/guides/strategies.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/ios.ts",
+      "sha256": "e1c802c9f8f32f8292419959880462544929c25182180d12841b5a9b4da3378c",
+      "destination": "docs/src/content/docs/guides/strategies.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/lock.ts",
+      "sha256": "e19766f4c6b00d8d5f196573dc6024ced849b521cdd74d72461a633e8c844969",
+      "destination": "docs/src/content/docs/guides/accessibility.md",
+      "reviewed": true
+    },
+    {
+      "source": "src/vanilla/lock.ts",
+      "sha256": "e19766f4c6b00d8d5f196573dc6024ced849b521cdd74d72461a633e8c844969",
+      "destination": "docs/src/content/docs/guides/frameworks.md",
+      "reviewed": true
+    }
+  ],
+  "notes": "Written for the first release of @samline/scroll-lock (a new package, not carried over from the utils collection). Reviewed against the package sources of 1.0.0."
+}

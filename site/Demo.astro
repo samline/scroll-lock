@@ -1,0 +1,193 @@
+---
+// Home preview: a modal dialog that locks this page, with a second dialog
+// nested inside. The controls change the options of the next lock, and the
+// status line reads the page state from data-scroll-lock-state.
+const fixed = [
+  ['never', 'Never'],
+  ['always', 'Always'],
+]
+---
+
+<scroll-lock-demo class="demo">
+  <div class="controls">
+    <fieldset>
+      <legend>Scrollbar gap</legend>
+      <label><input type="radio" name="scroll-lock-gap" value="true" checked /> Reserve</label>
+      <label><input type="radio" name="scroll-lock-gap" value="false" /> Ignore</label>
+    </fieldset>
+    <fieldset>
+      <legend>Pin body</legend>
+      {fixed.map(([value, label], i) => (
+        <label>
+          <input type="radio" name="scroll-lock-fixed" value={value} checked={i === 0} />
+          {label}
+        </label>
+      ))}
+    </fieldset>
+  </div>
+  <button type="button" class="pill" data-open="first">Open a dialog</button>
+  <p class="status" aria-live="polite"><output>Page scrolls</output></p>
+
+  <dialog data-dialog="first" aria-labelledby="scroll-lock-demo-first">
+    <p class="title" id="scroll-lock-demo-first">The page behind is locked</p>
+    <div class="list" tabindex="0" aria-label="Scrollable content">
+      {Array.from({ length: 10 }, (_, i) => <p>Line {i + 1}: this list still scrolls.</p>)}
+    </div>
+    <div class="actions">
+      <button type="button" class="pill" data-open="second">Open another</button>
+      <button type="button" class="pill" data-close>Close</button>
+    </div>
+  </dialog>
+  <dialog data-dialog="second" aria-labelledby="scroll-lock-demo-second">
+    <p class="title" id="scroll-lock-demo-second">Two locks held</p>
+    <p class="note">Close this one and the page stays locked until the first closes too.</p>
+    <div class="actions"><button type="button" class="pill" data-close>Close</button></div>
+  </dialog>
+</scroll-lock-demo>
+
+<script>
+  import { lockScroll, type PositionFixed } from '@samline/scroll-lock'
+
+  for (const root of document.querySelectorAll<HTMLElement>('scroll-lock-demo')) {
+    const output = root.querySelector('output')!
+    const html = document.documentElement
+    const picked = (name: string) =>
+      root.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!.value
+    let held = 0
+
+    const report = () => {
+      const gap = html.style.getPropertyValue('--scroll-lock-gap') || '0px'
+      output.value = held
+        ? `Page locked by ${held} ${held === 1 ? 'dialog' : 'dialogs'}, scrollbar gap ${gap}`
+        : 'Page scrolls'
+    }
+
+    // Each open dialog holds its own lock; closing one releases only that lock.
+    const releases = new Map<HTMLDialogElement, () => void>()
+
+    for (const dialog of root.querySelectorAll<HTMLDialogElement>('dialog')) {
+      dialog.addEventListener('close', () => {
+        releases.get(dialog)?.()
+        releases.delete(dialog)
+        held--
+        report()
+      })
+    }
+
+    root.addEventListener('click', event => {
+      const target = event.target as Element
+      const open = target.closest<HTMLElement>('[data-open]')
+      if (open) {
+        const dialog = root.querySelector<HTMLDialogElement>(
+          `[data-dialog="${open.dataset.open}"]`
+        )!
+        releases.set(
+          dialog,
+          lockScroll({
+            reserveGap: picked('scroll-lock-gap') === 'true',
+            positionFixed: picked('scroll-lock-fixed') as PositionFixed,
+          })
+        )
+        held++
+        dialog.showModal()
+        report()
+      }
+      target.closest('[data-close]')?.closest('dialog')?.close()
+    })
+  }
+</script>
+
+<style>
+  .demo {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+  }
+  fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 0.8125rem;
+    color: var(--color-text);
+  }
+  legend {
+    float: left;
+    margin-right: 0.5rem;
+    font: 0.65rem/1.9 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+  label {
+    display: inline-flex;
+    gap: 0.375rem;
+    align-items: center;
+  }
+  input {
+    accent-color: var(--color-accent);
+  }
+  .pill {
+    padding: 0.375rem 0.875rem;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: 999rem;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  .status {
+    margin: 0;
+    font: 0.75rem/1.6 var(--font-mono);
+    color: var(--color-text-subtle);
+  }
+  dialog {
+    max-width: min(26rem, calc(100vw - 2rem));
+    padding: 1.25rem;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  dialog::backdrop {
+    background: color-mix(in srgb, var(--color-text) 35%, transparent);
+  }
+  /* Mock headings of the demo content: styled text, so they stay out of the page outline. */
+  .title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .note {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--palette-specimen-text);
+  }
+  .list {
+    max-height: 9rem;
+    margin: 0.75rem 0;
+    padding: 0 0.75rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+  .list p {
+    margin: 0.75rem 0;
+    font-size: 0.875rem;
+    color: var(--palette-specimen-text);
+  }
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+</style>

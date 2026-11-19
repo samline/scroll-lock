@@ -10,3 +10,19 @@ playwright-report
 site
 # The canonical README template keeps placeholder lines Prettier would indent.
 scripts/package-readme-template.md
+# The website has its own formatter (bun run site:format).
+landing
+docs
+shared
+brief
+site-tools
+site-tests
+site-e2e
+SITE.md
+REFERENCE.md
+playwright.site.config.ts
+project.config.json
+content-audit.json
+design-reference.json
+# Third-party agent skills keep their upstream formatting.
+.agents/skills

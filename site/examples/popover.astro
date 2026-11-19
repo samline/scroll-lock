@@ -1,0 +1,34 @@
+---
+import './_shared.css'
+---
+
+<div class="preview scroll-lock-example">
+  <div class="controls">
+    <button type="button" class="pill" popovertarget="scroll-lock-menu">Menu</button>
+    <output aria-live="polite">Page scrolls</output>
+  </div>
+  <nav id="scroll-lock-menu" popover data-preview="popover" aria-label="Example menu">
+    <p class="part-title">Menu</p>
+    <p class="status">The page is locked until this closes. Click outside or press Escape.</p>
+  </nav>
+</div>
+
+<script>
+  import { isScrollLocked, scrollLock } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('popover', stage => {
+    const menu = stage.querySelector<HTMLElement>('[data-preview="popover"]')!
+    const output = stage.querySelector('output')!
+    const controller = scrollLock(menu)
+    const report = () => {
+      output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
+    }
+    menu.addEventListener('toggle', report)
+    return () => {
+      menu.removeEventListener('toggle', report)
+      if (menu.matches(':popover-open')) menu.hidePopover()
+      controller.destroy()
+    }
+  })
+</script>

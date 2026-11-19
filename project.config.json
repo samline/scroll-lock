@@ -1,0 +1,40 @@
+{
+  "package": {
+    "name": "Scroll Lock",
+    "npmName": "@samline/scroll-lock",
+    "version": "1.0.0",
+    "description": "Page scroll locking for modals, drawers and menus: nested locks, scrollbar gap compensation, scroll position restoration and the iOS Safari workaround, for vanilla JavaScript, any framework and plain HTML.",
+    "author": "Samuel Olvera (samline)",
+    "license": "MIT",
+    "keywords": [
+      "scroll-lock",
+      "body-scroll-lock",
+      "prevent-scroll",
+      "disable-scroll",
+      "modal",
+      "drawer",
+      "ios-safari",
+      "scrollbar"
+    ]
+  },
+  "site": {
+    "url": "https://samline.github.io/scroll-lock/",
+    "repository": "https://github.com/samline/scroll-lock",
+    "namespace": "samline-scroll-lock",
+    "template": false,
+    "credit": "samline"
+  },
+  "theme": {
+    "accentLight": "#2563eb",
+    "accentDark": "#8aabf6"
+  },
+  "delivery": {
+    "cdnScript": "https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.0.0/dist/browser/scroll-lock.global.js",
+    "cdnStylesheet": null
+  },
+  "dev": {
+    "landingPort": 4500,
+    "docsPort": 4501,
+    "testPort": 4508
+  }
+}

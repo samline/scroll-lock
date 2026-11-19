@@ -32,3 +32,9 @@ playwright/.cache/
 
 # Private working notes (client migrations, drafts, reports) never leave the machine
 .local/
+
+# Website build output and generated assets (package-landing-docs)
+brief/
+shared/generated/
+**/public/fonts/
+**/public/font-licenses/

@@ -1,0 +1,86 @@
+---
+title: 'Scroll Lock'
+description: What @samline/scroll-lock does, how nested locks, the scrollbar gap and the iOS Safari workaround fit together, and where to start.
+locale: en
+sidebar:
+  group: start
+  order: 1
+  label: Overview
+---
+
+import CardGrid from '../../../../shared/components/CardGrid.astro'
+import LinkCard from '../../../../shared/components/LinkCard.astro'
+import { href } from '../../lib/routes'
+
+`@samline/scroll-lock` stops the page from scrolling while a modal, drawer or menu is open, and gives it back exactly as it was. Mark the element with `data-scroll-lock`, or call `lockScroll()` from your code.
+
+```html
+<dialog id="terms" data-scroll-lock>…</dialog>
+```
+
+## How a lock works
+
+1. The first lock marks `<html>` with `data-scroll-lock-state="locked"` and measures the scrollbar.
+2. On desktop and Android it sets `overflow: hidden` on `<html>` and adds the scrollbar width to `<body>`'s right padding, so nothing shifts. The width is also published as `--scroll-lock-gap`.
+3. On iPhone and iPad, where `overflow: hidden` does not stop the page, it blocks page touches instead, offsets the body by the scroll position and keeps focused inputs above the keyboard.
+4. Every further lock only counts. The page unlocks after the last release, in any order, and the scroll position is where it was.
+
+## Pieces
+
+| Job                                 | How                                                           |
+| ----------------------------------- | ------------------------------------------------------------- |
+| Lock while a dialog or menu is open | `data-scroll-lock` with `autoScrollLock()`, or the CDN script |
+| Lock from code                      | `const unlock = lockScroll()`                                 |
+| One lock per component              | `createScrollLock()` → `lock`, `unlock`, `toggle`             |
+| Watch elements you pass             | `scrollLock(target, options)`                                 |
+| Keep fixed elements still           | `padding-right: var(--scroll-lock-gap, 0px)`                  |
+| Pin the body                        | `positionFixed: 'safari'` or `'always'`                       |
+| Release everything                  | `resetScrollLock()`                                           |
+
+## Choose your next step
+
+<CardGrid columns={2}>
+
+<LinkCard href={href('getting-started')} title="Installation">
+
+Package managers, the CDN and the first lock.
+
+</LinkCard>
+
+<LinkCard href={href('guides/examples')} title="Examples">
+
+Live previews with the complete, copyable source of each one.
+
+</LinkCard>
+
+<LinkCard href={href('reference/api')} title="API reference">
+
+Signatures and behavior of every function and `window.ScrollLock`.
+
+</LinkCard>
+
+<LinkCard href={href('reference/configuration')} title="Configuration">
+
+Options, attributes, the state attribute and `--scroll-lock-gap`.
+
+</LinkCard>
+
+<LinkCard href={href('guides/strategies')} title="How it works">
+
+Nesting, the scrollbar gap, iOS Safari and `positionFixed`.
+
+</LinkCard>
+
+<LinkCard href={href('guides/accessibility')} title="Accessibility">
+
+What a lock does and does not do for focus, inert content and motion.
+
+</LinkCard>
+
+<LinkCard href={href('guides/frameworks')} title="Framework integrations">
+
+React, Vue, Svelte, Astro and client-side routers.
+
+</LinkCard>
+
+</CardGrid>

@@ -1,0 +1,43 @@
+---
+import './_shared.css'
+
+const panels = ['Cart', 'Filters']
+---
+
+<div class="preview scroll-lock-example">
+  <div class="controls" data-preview="nested">
+    {panels.map(name => (
+      <button type="button" class="pill" aria-pressed="false" aria-controls={`scroll-lock-${name.toLowerCase()}`}>
+        {name}
+      </button>
+    ))}
+    <output aria-live="polite">Page scrolls</output>
+  </div>
+  {panels.map(name => (
+    <div class="panel" id={`scroll-lock-${name.toLowerCase()}`} hidden>
+      <p class="part-title">{name}</p>
+      <p class="status">Holds its own lock. Close the panels in any order.</p>
+    </div>
+  ))}
+</div>
+
+<script>
+  import { createScrollLock, isScrollLocked } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('nested', stage => {
+    const output = stage.querySelector('output')!
+    const locks = Array.from(stage.querySelectorAll<HTMLButtonElement>('[aria-controls]'), button => {
+      const panel = stage.querySelector<HTMLElement>(`#${button.getAttribute('aria-controls')}`)!
+      const lock = createScrollLock()
+      button.addEventListener('click', () => {
+        lock.toggle()
+        panel.hidden = !lock.isLocked()
+        button.setAttribute('aria-pressed', String(lock.isLocked()))
+        output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
+      })
+      return lock
+    })
+    return locks
+  })
+</script>
