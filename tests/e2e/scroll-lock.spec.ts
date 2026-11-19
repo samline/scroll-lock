@@ -1,3 +1,5 @@
+import { devices } from '@playwright/test'
+
 import { expect, test } from './fixtures'
 
 type Page = import('@playwright/test').Page
@@ -122,4 +124,35 @@ test('exposes the scrollbar gap as a custom property', async ({ load }) => {
     return { expected, value }
   })
   expect(gap.value).toBe(`${gap.expected}px`)
+})
+
+test.describe('on an emulated iPhone', () => {
+  const { defaultBrowserType: _, ...iPhone } = devices['iPhone 15']
+  test.use(iPhone)
+
+  test('auto mode takes the iOS workaround and blocks page touches', async ({
+    load,
+    browserName,
+  }) => {
+    test.skip(browserName === 'firefox', 'Firefox has no mobile emulation')
+    const page = await load(layout, 'scroll-lock')
+    await start(page, 600)
+    const result = await page.evaluate(() => {
+      const release = (window as any).ScrollLock.lockScroll()
+      const touch = (type: string, target: Element, y: number) => {
+        const event = new Event(type, { bubbles: true, cancelable: true })
+        Object.defineProperty(event, 'changedTouches', { value: [{ pageY: y }] })
+        target.dispatchEvent(event)
+        return event.defaultPrevented
+      }
+      const marker = document.getElementById('marker')!
+      touch('touchstart', marker, 300)
+      const blocked = touch('touchmove', marker, 200)
+      const offset = document.body.style.marginTop
+      const lockedY = Math.round(scrollY)
+      release()
+      return { blocked, offset, lockedY, restoredY: Math.round(scrollY) }
+    })
+    expect(result).toEqual({ blocked: true, offset: '-600px', lockedY: 0, restoredY: 600 })
+  })
 })

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { lockScroll, resetScrollLock } from '../src/index.js'
-import { isTextInput, scrollParent } from '../src/vanilla/ios.js'
+import { isTextInput, jump, scrollParent } from '../src/vanilla/ios.js'
 import { page, platform, reset, syncFrames, touch } from './helpers.js'
 
 const html = document.documentElement
@@ -235,6 +235,16 @@ describe('lockScroll (ios)', () => {
 })
 
 describe('helpers', () => {
+  it('falls back to scrollTo(x, y) where behavior: instant is rejected', () => {
+    const calls: unknown[][] = []
+    vi.stubGlobal('scrollTo', (...args: unknown[]) => {
+      if (typeof args[0] === 'object') throw new TypeError('invalid enum')
+      calls.push(args)
+    })
+    jump(10, 20)
+    expect(calls).toEqual([[10, 20]])
+  })
+
   it('finds the scroll parent, with or without the element itself', () => {
     const list = scroller(0)
     const item = document.getElementById('item')!

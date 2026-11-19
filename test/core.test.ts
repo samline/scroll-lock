@@ -41,6 +41,9 @@ describe('platform checks', () => {
     expect(isIOS(info('MacIntel', safari, 5))).toBe(true)
     expect(isIOS(info('MacIntel', safari, 0))).toBe(false)
     expect(isIOS(info('Win32'))).toBe(false)
+    expect(isIOS(info('MacIntel', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)'))).toBe(
+      true
+    )
   })
 
   it('detects Safari, not Chrome or Android browsers', () => {

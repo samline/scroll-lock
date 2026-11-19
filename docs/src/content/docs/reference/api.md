@@ -64,7 +64,7 @@ Locks the page while an element is open. Each element holds its own lock, so sev
 - Any other element: it has no `hidden` attribute and no `aria-hidden="true"`.
 - With `isOpen`, whatever your function returns.
 
-Changes to `open`, `hidden`, `aria-hidden`, `class`, `style`, the `data-scroll-lock-*` attributes and the `toggle` event are picked up on their own. Call `refresh()` after changing anything else your `isOpen` reads. Each element gets `data-scroll-lock-state="locked"` or `"unlocked"`. `destroy()` releases the locks, stops watching and restores the state attribute; it is idempotent.
+Changes to `open`, `hidden`, `aria-hidden`, `class`, `style`, the `data-scroll-lock-*` attributes and the `toggle` event are picked up on their own. Call `refresh()` after changing anything else your `isOpen` reads. Each element gets `data-scroll-lock-state="locked"` or `"unlocked"`. `destroy()` releases the locks, stops watching and restores the state attribute; it is idempotent. Call it before removing a watched element from the page; `autoScrollLock` does that for you.
 
 ## autoScrollLock(options?)
 

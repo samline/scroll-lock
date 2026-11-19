@@ -48,7 +48,7 @@ html[data-scroll-lock-state='locked'] .chat-widget {
 }
 ```
 
-## --scroll-lock-gap
+## `--scroll-lock-gap`
 
 While locked, `<html>` carries `--scroll-lock-gap`: the width of the scrollbar the lock removed, in pixels (`0px` when nothing was compensated). Fixed and sticky elements are outside `<body>`'s padding, so pad them with it:
 

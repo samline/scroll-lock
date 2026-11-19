@@ -24,7 +24,10 @@ const markup = `<button type="button" id="open">Read the terms</button>
 const script = `import { autoScrollLock } from '@samline/scroll-lock'
 
 autoScrollLock()
-open.addEventListener('click', () => terms.showModal())`
+
+document.querySelector('#open').addEventListener('click', () => {
+  document.querySelector('#terms').showModal()
+})`
 
 const sections = {
   hero: {

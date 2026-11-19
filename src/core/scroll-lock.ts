@@ -77,9 +77,14 @@ export interface PlatformInfo {
   standalone?: boolean
 }
 
-/** iPhone or iPad, including iPadOS reporting itself as a Mac. */
-export const isIOS = ({ platform, maxTouchPoints }: PlatformInfo): boolean =>
-  /^iP(hone|ad|od)/.test(platform) || (/^Mac/.test(platform) && maxTouchPoints > 1)
+/**
+ * iPhone or iPad, including iPadOS reporting itself as a Mac, and browser
+ * device emulation, which changes the user agent but not `platform`.
+ */
+export const isIOS = ({ platform, userAgent, maxTouchPoints }: PlatformInfo): boolean =>
+  /^iP(hone|ad|od)/.test(platform) ||
+  /\biP(hone|ad|od)\b/.test(userAgent) ||
+  (/^Mac/.test(platform) && maxTouchPoints > 1)
 
 /** Safari on macOS or iOS (not Chrome, not Android browsers). */
 export const isSafari = ({ userAgent }: PlatformInfo): boolean =>

@@ -98,19 +98,19 @@
     },
     {
       "source": "src/vanilla/watch.ts",
-      "sha256": "96ba7724cc3e2691ddad5df0214984f0eb9a7f5747f3a9b4d75aa2425c7adfb3",
+      "sha256": "2b14d616d908b3eb1b51cf566915a7a37ca4471ffbbd41a03c1900426fa6d1ac",
       "destination": "docs/src/content/docs/reference/api.md",
       "reviewed": true
     },
     {
       "source": "src/core/scroll-lock.ts",
-      "sha256": "71513739bf5635fa34fd7442a3c33c5e10c8046b243a0359ae5982f658eedc52",
+      "sha256": "2d5738eea44e332d7524013ee883d2aeb87b8ea1e49a12733056fcfe434776a7",
       "destination": "docs/src/content/docs/reference/configuration.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/watch.ts",
-      "sha256": "96ba7724cc3e2691ddad5df0214984f0eb9a7f5747f3a9b4d75aa2425c7adfb3",
+      "sha256": "2b14d616d908b3eb1b51cf566915a7a37ca4471ffbbd41a03c1900426fa6d1ac",
       "destination": "docs/src/content/docs/reference/configuration.md",
       "reviewed": true
     },
@@ -122,7 +122,7 @@
     },
     {
       "source": "src/vanilla/ios.ts",
-      "sha256": "e1c802c9f8f32f8292419959880462544929c25182180d12841b5a9b4da3378c",
+      "sha256": "e028bf5d25afef6474d9d706fdd1058c7f0b8dcba07ba881c053b6ad63ca9d76",
       "destination": "docs/src/content/docs/guides/strategies.md",
       "reviewed": true
     },

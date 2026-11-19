@@ -42,7 +42,12 @@ export const chain =
 
 /** Scroll the window without animation, whatever `scroll-behavior` says. */
 export const jump = (left: number, top: number): void => {
-  window.scrollTo({ left, top, behavior: 'instant' })
+  try {
+    window.scrollTo({ left, top, behavior: 'instant' })
+  } catch {
+    // Browsers that predate `behavior: 'instant'` reject it as an invalid enum.
+    window.scrollTo(left, top)
+  }
 }
 
 /** Set an inline style and return a function that puts the previous one back. */

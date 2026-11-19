@@ -146,8 +146,9 @@ const inert: ScrollLockController = {
 
 /**
  * Lock the page while an element (a dialog, a drawer, a menu) is open, and
- * unlock it when the element closes, is removed or the controller is destroyed.
- * Each element holds its own lock, so nested ones unlock in any order.
+ * unlock it when the element closes or the controller is destroyed. Call
+ * `destroy()` before removing a watched element; `autoScrollLock()` does that
+ * on its own. Each element holds its own lock, so nested ones unlock in any order.
  */
 export const scrollLock = (
   target: ElementTarget,

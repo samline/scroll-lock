@@ -42,14 +42,14 @@ When `<html>` has `scrollbar-gutter: stable`, the gutter keeps its space anyway,
 
 ## iOS Safari
 
-Mobile Safari scrolls the page even with `overflow: hidden`: while the toolbars collapse, under the software keyboard, when an input is focused and with the keyboard's next and previous buttons. With `mode: 'auto'` (the default), iPhone and iPad (including iPadOS, which reports itself as a Mac) use a workaround instead:
+Mobile Safari scrolls the page even with `overflow: hidden`: while the toolbars collapse, under the software keyboard, when an input is focused and with the keyboard's next and previous buttons. With `mode: 'auto'` (the default), iPhone and iPad (including iPadOS, which reports itself as a Mac, and browser device emulation of either) use a workaround instead:
 
 1. A touch that moves outside a scrollable element is cancelled.
 2. Inside a scrollable element, a touch that would scroll past its top or bottom edge is cancelled, so the page does not take over. This disables the bounce at the edges.
 3. Tapping an input focuses it directly, moved out of the way for a frame, so Safari does not scroll the page to it; the input is then scrolled into view inside its own container, above the keyboard.
 4. The body is offset by the scroll position and the window scrolled to the top, so the real scroll position stays zero, and any stray scroll is undone.
 
-On release the offset goes away and the page returns to its position. Every iOS browser uses WebKit, so the same workaround applies in Chrome or Firefox on iOS.
+On release the offset goes away and the page returns to its position. Chrome, Firefox and the other iOS browsers run on WebKit too, so the same workaround applies there.
 
 Force a strategy with `mode: 'overflow'` or `mode: 'ios'` (or `data-scroll-lock-mode`), for example to test the iOS path on a desktop browser.
 
