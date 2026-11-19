@@ -2,13 +2,6 @@
 
 All notable changes to this package. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [semver](https://semver.org/).
 
-## Unreleased
-
-### Changed
-
-- Website examples: the modal dialog centers on the page and closes with its close button, Escape or a click outside (`closedby="any"`, with a fallback for Safari); the nested panels are side panels with their own close buttons and Escape; the popover menu closes on a chosen link. Every preview's status reads the page state from `data-scroll-lock-state`, so a lock held by another preview no longer leaves a stale "Page scrolls" or "Page locked". The library itself is unchanged.
-- The Home demo opens each dialog before taking its lock and counts only the locks it holds.
-
 ## [1.0.0] - 2026-11-18
 
 ### Added
