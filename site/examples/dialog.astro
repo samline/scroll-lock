@@ -4,37 +4,66 @@ import './_shared.css'
 
 <div class="preview scroll-lock-example">
   <div class="controls">
-    <button type="button" class="pill" data-open>Read the terms</button>
+    <button type="button" class="pill" data-open aria-haspopup="dialog">Read the terms</button>
     <output aria-live="polite">Page scrolls</output>
   </div>
-  <dialog data-preview="dialog" aria-labelledby="scroll-lock-terms-title">
-    <p class="part-title" id="scroll-lock-terms-title">Terms</p>
-    <div class="list" tabindex="0" aria-label="Clauses">
+  <dialog
+    class="sheet"
+    data-preview="dialog"
+    data-scroll-lock
+    closedby="any"
+    aria-labelledby="scroll-lock-terms-title"
+  >
+    <div class="sheet-header">
+      <p class="part-title" id="scroll-lock-terms-title">Terms</p>
+      <form method="dialog">
+        <button class="close" aria-label="Close the terms">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+    </div>
+    <div class="list" tabindex="0" role="region" aria-label="Clauses">
       {Array.from({ length: 12 }, (_, i) => <p>Clause {i + 1}. This list scrolls; the page behind it does not.</p>)}
     </div>
-    <form method="dialog"><button class="pill">Close</button></form>
+    <p class="hint">Close with the button, Escape or a click outside.</p>
+    <form method="dialog" class="actions"><button class="pill">Accept</button></form>
   </dialog>
 </div>
 
 <script>
-  import { isScrollLocked, scrollLock } from '@samline/scroll-lock'
+  import { scrollLock } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
 
   preview('dialog', stage => {
     const dialog = stage.querySelector<HTMLDialogElement>('[data-preview="dialog"]')!
-    const output = stage.querySelector('output')!
-    const open = () => dialog.showModal()
-    const report = () => {
-      output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
-    }
+    const opener = stage.querySelector<HTMLButtonElement>('[data-open]')!
+    const state = showPageState(stage.querySelector('output')!)
+    // The watcher follows the dialog's open attribute: every way of closing
+    // it (button, form, Escape, click outside) releases the lock.
     const controller = scrollLock(dialog)
-    const observer = new MutationObserver(report)
-    observer.observe(dialog, { attributes: true, attributeFilter: ['data-scroll-lock-state'] })
-    stage.querySelector('[data-open]')!.addEventListener('click', open)
+    const open = () => dialog.showModal()
+    // Light dismiss where closedby="any" is not supported yet (Safari).
+    const dismiss = (event: MouseEvent) => {
+      if ('closedBy' in HTMLDialogElement.prototype || event.target !== dialog) return
+      const box = dialog.getBoundingClientRect()
+      const inside =
+        event.clientX >= box.left &&
+        event.clientX <= box.right &&
+        event.clientY >= box.top &&
+        event.clientY <= box.bottom
+      if (!inside) dialog.close()
+    }
+    opener.addEventListener('click', open)
+    dialog.addEventListener('click', dismiss)
     return () => {
-      observer.disconnect()
+      opener.removeEventListener('click', open)
+      dialog.removeEventListener('click', dismiss)
       dialog.close()
       controller.destroy()
+      state.destroy()
     }
   })
 </script>

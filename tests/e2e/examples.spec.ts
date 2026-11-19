@@ -27,34 +27,81 @@ const locked = (page: Page) =>
   page.evaluate(() => document.documentElement.getAttribute('data-scroll-lock-state'))
 
 test.describe('scroll-lock copyable examples', () => {
-  test('the dialog locks the page until it closes', async ({ page }) => {
+  test('the dialog unlocks however it closes', async ({ page }) => {
     await open(page, 'dialog')
-    await page.getByRole('button', { name: 'Read the terms' }).click()
+    const opener = page.getByRole('button', { name: 'Read the terms' })
+    const dialog = page.getByRole('dialog', { name: 'Terms' })
+
+    await opener.click()
     await expect.poll(() => locked(page)).toBe('locked')
     await page.keyboard.press('Escape')
+    await expect.poll(() => locked(page)).toBeNull()
+
+    await opener.click()
+    await dialog.getByRole('button', { name: 'Close the terms' }).click()
+    await expect.poll(() => locked(page)).toBeNull()
+
+    await opener.click()
+    await dialog.getByRole('button', { name: 'Accept' }).click()
+    await expect.poll(() => locked(page)).toBeNull()
+
+    // Light dismiss: closedby="any", or the script's fallback where it is missing.
+    await opener.click()
+    await expect.poll(() => locked(page)).toBe('locked')
+    await page.mouse.click(5, 690)
+    await expect(dialog).toBeHidden()
     await expect.poll(() => locked(page)).toBeNull()
   })
 
   test('nested panels unlock after the last one closes, in any order', async ({ page }) => {
     await open(page, 'nested')
-    const cart = page.getByRole('button', { name: 'Cart' })
-    const filters = page.getByRole('button', { name: 'Filters' })
+    const cart = page.getByRole('button', { name: 'Cart', exact: true })
+    const filters = page.getByRole('button', { name: 'Filters', exact: true })
+    const status = page.locator('#status')
     await cart.click()
     await filters.click()
-    await expect(page.locator('#status')).toHaveText('Page locked')
-    await cart.click()
-    await expect(page.locator('#status')).toHaveText('Page locked')
+    await expect(status).toHaveText('Page locked, 2 panels open')
+    await expect(page.locator('#filters')).toBeVisible()
+
+    // Escape closes the panel opened last; the other keeps the page locked.
+    await page.keyboard.press('Escape')
+    await expect(page.locator('#filters')).toBeHidden()
+    await expect(status).toHaveText('Page locked, 1 panel open')
     expect(await locked(page)).toBe('locked')
+
+    await page.getByRole('button', { name: 'Close cart' }).click()
+    await expect(status).toHaveText('Page scrolls')
+    expect(await locked(page)).toBeNull()
+
     await filters.click()
-    await expect(page.locator('#status')).toHaveText('Page scrolls')
+    await cart.click()
+    await page.getByRole('button', { name: 'Close filters' }).click()
+    expect(await locked(page)).toBe('locked')
+    await expect(cart).toHaveAttribute('aria-expanded', 'true')
+    await page.getByRole('button', { name: 'Close cart' }).click()
+    await expect(status).toHaveText('Page scrolls')
     expect(await locked(page)).toBeNull()
   })
 
-  test('the popover menu locks while open, light dismiss included', async ({ page }) => {
+  test('the popover menu unlocks however it closes', async ({ page }) => {
     await open(page, 'popover')
-    await page.getByRole('button', { name: 'Menu' }).click()
+    const opener = page.getByRole('button', { name: 'Menu', exact: true })
+
+    await opener.click()
     await expect.poll(() => locked(page)).toBe('locked')
     await page.keyboard.press('Escape')
+    await expect.poll(() => locked(page)).toBeNull()
+
+    await opener.click()
+    await page.getByRole('link', { name: 'Products' }).click()
+    await expect.poll(() => locked(page)).toBeNull()
+
+    await opener.click()
+    await page.getByRole('button', { name: 'Close the menu' }).click()
+    await expect.poll(() => locked(page)).toBeNull()
+
+    await opener.click()
+    await page.mouse.click(20, 400)
     await expect.poll(() => locked(page)).toBeNull()
   })
 })

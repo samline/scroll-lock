@@ -20,28 +20,103 @@
   font-size: 0.875rem;
   cursor: pointer;
 }
-.scroll-lock-example .pill[aria-pressed='true'] {
+.scroll-lock-example .pill[aria-expanded='true'] {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-bg);
 }
 .scroll-lock-example output,
-.scroll-lock-example .status {
+.scroll-lock-example .hint {
   margin: 0;
   font: 0.75rem/1.6 var(--font-mono);
   color: var(--color-text-subtle);
 }
-.scroll-lock-example dialog,
-.scroll-lock-example [popover] {
-  max-width: min(28rem, calc(100vw - 2rem));
+
+/* Top-layer surfaces. The site resets margins, so the modal centers itself again. */
+.scroll-lock-example .sheet,
+.scroll-lock-example .side-panel {
+  box-sizing: border-box;
   padding: 1.25rem;
   border: 0.0625rem solid var(--color-border);
-  border-radius: var(--radius-control);
   background: var(--color-bg);
   color: var(--color-text);
+  box-shadow: 0 1.5rem 3rem -1rem rgb(0 0 0 / 0.45);
 }
-.scroll-lock-example dialog::backdrop {
+.scroll-lock-example .sheet {
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  border-radius: var(--radius-control);
+}
+.scroll-lock-example .sheet::backdrop {
   background: color-mix(in srgb, var(--color-text) 35%, transparent);
+}
+.scroll-lock-example .side-panel {
+  position: fixed;
+  inset: 0 auto 0 auto;
+  width: min(20rem, calc(100vw - 3rem));
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.scroll-lock-example .side-panel:popover-open {
+  display: flex;
+}
+.scroll-lock-example .side-panel[data-side='end'] {
+  right: 0;
+  border-width: 0 0 0 0.0625rem;
+}
+.scroll-lock-example .side-panel[data-side='start'] {
+  left: 0;
+  border-width: 0 0.0625rem 0 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-lock-example .side-panel:popover-open {
+    animation: scroll-lock-slide 0.2s ease-out;
+  }
+  .scroll-lock-example .side-panel[data-side='start']:popover-open {
+    animation-name: scroll-lock-slide-start;
+  }
+}
+@keyframes scroll-lock-slide {
+  from {
+    translate: 100% 0;
+  }
+}
+@keyframes scroll-lock-slide-start {
+  from {
+    translate: -100% 0;
+  }
+}
+
+.scroll-lock-example .sheet-header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.scroll-lock-example .sheet-header form {
+  margin: 0;
+}
+.scroll-lock-example .close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: 999rem;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.scroll-lock-example .part-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
 .scroll-lock-example .list {
   max-height: 9rem;
@@ -57,17 +132,26 @@
   font-size: 0.875rem;
   color: var(--palette-specimen-text);
 }
-.scroll-lock-example .part-title {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
+.scroll-lock-example .actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.75rem 0 0;
 }
-.scroll-lock-example .panel {
-  padding: 1rem;
-  border: 0.0625rem solid var(--color-border);
+.scroll-lock-example .links {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scroll-lock-example .links a {
+  display: block;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-control);
+  color: var(--color-text);
+  text-decoration: none;
 }
-.scroll-lock-example .panel[hidden] {
-  display: none;
+.scroll-lock-example .links a:hover,
+.scroll-lock-example .links a:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
 }

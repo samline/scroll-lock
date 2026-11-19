@@ -1,43 +1,92 @@
 ---
 import './_shared.css'
 
-const panels = ['Cart', 'Filters']
+const panels = [
+  { id: 'cart', name: 'Cart', side: 'end', text: 'Slides in from the right and holds its own lock.' },
+  { id: 'filters', name: 'Filters', side: 'start', text: 'Slides in from the left and holds another lock.' },
+]
 ---
 
 <div class="preview scroll-lock-example">
   <div class="controls" data-preview="nested">
-    {panels.map(name => (
-      <button type="button" class="pill" aria-pressed="false" aria-controls={`scroll-lock-${name.toLowerCase()}`}>
-        {name}
+    {panels.map(panel => (
+      <button
+        type="button"
+        class="pill"
+        aria-expanded="false"
+        aria-controls={`scroll-lock-${panel.id}`}
+      >
+        {panel.name}
       </button>
     ))}
     <output aria-live="polite">Page scrolls</output>
   </div>
-  {panels.map(name => (
-    <div class="panel" id={`scroll-lock-${name.toLowerCase()}`} hidden>
-      <p class="part-title">{name}</p>
-      <p class="status">Holds its own lock. Close the panels in any order.</p>
-    </div>
+  {panels.map(panel => (
+    <aside
+      class="side-panel"
+      id={`scroll-lock-${panel.id}`}
+      data-side={panel.side}
+      popover="manual"
+      aria-labelledby={`scroll-lock-${panel.id}-title`}
+    >
+      <div class="sheet-header">
+        <p class="part-title" id={`scroll-lock-${panel.id}-title`}>
+          {panel.name}
+        </p>
+        <button type="button" class="close" data-close aria-label={`Close ${panel.name.toLowerCase()}`}>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <p class="hint">{panel.text}</p>
+      <p class="hint">Close the panels in any order: the page unlocks after the last one.</p>
+    </aside>
   ))}
 </div>
 
 <script>
-  import { createScrollLock, isScrollLocked } from '@samline/scroll-lock'
+  import { createScrollLock } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
 
   preview('nested', stage => {
-    const output = stage.querySelector('output')!
-    const locks = Array.from(stage.querySelectorAll<HTMLButtonElement>('[aria-controls]'), button => {
-      const panel = stage.querySelector<HTMLElement>(`#${button.getAttribute('aria-controls')}`)!
-      const lock = createScrollLock()
-      button.addEventListener('click', () => {
-        lock.toggle()
-        panel.hidden = !lock.isLocked()
-        button.setAttribute('aria-pressed', String(lock.isLocked()))
-        output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
-      })
-      return lock
-    })
-    return locks
+    // Most recently opened last, so Escape closes the top one first.
+    const open: Array<() => void> = []
+    const panels = Array.from(
+      stage.querySelectorAll<HTMLButtonElement>('[aria-controls]'),
+      button => {
+        const panel = stage.querySelector<HTMLElement>(`#${button.getAttribute('aria-controls')}`)!
+        const lock = createScrollLock()
+        const set = (wanted: boolean) => {
+          lock.toggle(wanted)
+          panel.togglePopover(wanted)
+          button.setAttribute('aria-expanded', String(wanted))
+          const index = open.indexOf(close)
+          if (index >= 0) open.splice(index, 1)
+          if (wanted) open.push(close)
+          state.update()
+        }
+        const close = () => set(false)
+        button.addEventListener('click', () => set(!lock.isLocked()))
+        panel.querySelector('[data-close]')!.addEventListener('click', close)
+        return { lock, close }
+      }
+    )
+    const state = showPageState(stage.querySelector('output')!, () =>
+      open.length ? `${open.length} ${open.length === 1 ? 'panel' : 'panels'} open` : ''
+    )
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && open.length) open.at(-1)!()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      for (const panel of panels) {
+        panel.close()
+        panel.lock.destroy()
+      }
+      state.destroy()
+    }
   })
 </script>

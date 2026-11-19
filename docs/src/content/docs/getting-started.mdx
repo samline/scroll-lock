@@ -36,6 +36,10 @@ Install `@samline/scroll-lock`, then follow the Package / ESM or the HTML / CDN 
 import { autoScrollLock } from '@samline/scroll-lock'
 
 autoScrollLock()
+
+document.querySelector('#open').addEventListener('click', () => {
+  document.querySelector('#terms').showModal()
+})
 ```
 
 ```html

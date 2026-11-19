@@ -1,5 +1,7 @@
 ---
 import './_shared.css'
+
+const links = ['Home', 'Products', 'Contact']
 ---
 
 <div class="preview scroll-lock-example">
@@ -7,28 +9,62 @@ import './_shared.css'
     <button type="button" class="pill" popovertarget="scroll-lock-menu">Menu</button>
     <output aria-live="polite">Page scrolls</output>
   </div>
-  <nav id="scroll-lock-menu" popover data-preview="popover" aria-label="Example menu">
-    <p class="part-title">Menu</p>
-    <p class="status">The page is locked until this closes. Click outside or press Escape.</p>
+  <nav
+    class="side-panel"
+    id="scroll-lock-menu"
+    data-side="end"
+    popover
+    data-preview="popover"
+    data-scroll-lock
+    aria-labelledby="scroll-lock-menu-title"
+  >
+    <div class="sheet-header">
+      <p class="part-title" id="scroll-lock-menu-title">Menu</p>
+      <button
+        type="button"
+        class="close"
+        popovertarget="scroll-lock-menu"
+        popovertargetaction="hide"
+        aria-label="Close the menu"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+    <ul class="links">
+      {links.map(link => (
+        <li>
+          <a href="#scroll-lock-menu-title">{link}</a>
+        </li>
+      ))}
+    </ul>
+    <p class="hint">A link, Escape or a click outside closes the menu and unlocks the page.</p>
   </nav>
 </div>
 
 <script>
-  import { isScrollLocked, scrollLock } from '@samline/scroll-lock'
+  import { scrollLock } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
 
   preview('popover', stage => {
     const menu = stage.querySelector<HTMLElement>('[data-preview="popover"]')!
-    const output = stage.querySelector('output')!
+    const state = showPageState(stage.querySelector('output')!)
+    // The watcher listens to the popover's toggle event, light dismiss included.
     const controller = scrollLock(menu)
-    const report = () => {
-      output.value = isScrollLocked() ? 'Page locked' : 'Page scrolls'
+    // A chosen link closes the menu; the demo links lead nowhere.
+    const follow = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('a')) return
+      event.preventDefault()
+      menu.hidePopover()
     }
-    menu.addEventListener('toggle', report)
+    menu.addEventListener('click', follow)
     return () => {
-      menu.removeEventListener('toggle', report)
+      menu.removeEventListener('click', follow)
       if (menu.matches(':popover-open')) menu.hidePopover()
       controller.destroy()
+      state.destroy()
     }
   })
 </script>

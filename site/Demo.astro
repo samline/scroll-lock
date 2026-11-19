@@ -53,23 +53,21 @@ const fixed = [
     const html = document.documentElement
     const picked = (name: string) =>
       root.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!.value
-    let held = 0
+    // Each open dialog holds its own lock; closing one releases only that lock.
+    const releases = new Map<HTMLDialogElement, () => void>()
 
     const report = () => {
+      const held = releases.size
       const gap = html.style.getPropertyValue('--scroll-lock-gap') || '0px'
       output.value = held
         ? `Page locked by ${held} ${held === 1 ? 'dialog' : 'dialogs'}, scrollbar gap ${gap}`
         : 'Page scrolls'
     }
 
-    // Each open dialog holds its own lock; closing one releases only that lock.
-    const releases = new Map<HTMLDialogElement, () => void>()
-
     for (const dialog of root.querySelectorAll<HTMLDialogElement>('dialog')) {
       dialog.addEventListener('close', () => {
         releases.get(dialog)?.()
         releases.delete(dialog)
-        held--
         report()
       })
     }
@@ -81,6 +79,9 @@ const fixed = [
         const dialog = root.querySelector<HTMLDialogElement>(
           `[data-dialog="${open.dataset.open}"]`
         )!
+        if (dialog.open) return
+        // Open first: a dialog that fails to open must not leave a lock behind.
+        dialog.showModal()
         releases.set(
           dialog,
           lockScroll({
@@ -88,8 +89,6 @@ const fixed = [
             positionFixed: picked('scroll-lock-fixed') as PositionFixed,
           })
         )
-        held++
-        dialog.showModal()
         report()
       }
       target.closest('[data-close]')?.closest('dialog')?.close()
@@ -151,6 +150,8 @@ const fixed = [
   }
   dialog {
     max-width: min(26rem, calc(100vw - 2rem));
+    /* The site resets margins; put back the centered modal. */
+    margin: auto;
     padding: 1.25rem;
     border: 0.0625rem solid var(--color-border);
     border-radius: var(--radius-control);
