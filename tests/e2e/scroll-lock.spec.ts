@@ -136,8 +136,11 @@ test.describe('on an emulated iPhone', () => {
   }) => {
     test.skip(browserName === 'firefox', 'Firefox has no mobile emulation')
     const page = await load(layout, 'scroll-lock')
-    await start(page, 600)
+    // Scroll near 600 px; device pixel ratios can round the exact position.
+    await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'instant' }))
+    await expect.poll(() => scrollY(page)).toBeGreaterThan(590)
     const result = await page.evaluate(() => {
+      const before = window.scrollY
       const release = (window as any).ScrollLock.lockScroll()
       const touch = (type: string, target: Element, y: number) => {
         const event = new Event(type, { bubbles: true, cancelable: true })
@@ -148,11 +151,14 @@ test.describe('on an emulated iPhone', () => {
       const marker = document.getElementById('marker')!
       touch('touchstart', marker, 300)
       const blocked = touch('touchmove', marker, 200)
-      const offset = document.body.style.marginTop
-      const lockedY = Math.round(scrollY)
+      const offset = parseFloat(document.body.style.marginTop) + before
+      const lockedY = Math.round(window.scrollY)
       release()
-      return { blocked, offset, lockedY, restoredY: Math.round(scrollY) }
+      return { blocked, offset, lockedY, restored: Math.abs(window.scrollY - before) }
     })
-    expect(result).toEqual({ blocked: true, offset: '-600px', lockedY: 0, restoredY: 600 })
+    expect(result.blocked).toBe(true)
+    expect(Math.abs(result.offset)).toBeLessThan(1)
+    expect(result.lockedY).toBe(0)
+    expect(result.restored).toBeLessThan(1)
   })
 })
