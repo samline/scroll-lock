@@ -49,9 +49,9 @@
   },
   "themeReview": {
     "status": "verified",
-    "source": "Blue (#2563eb), a hue no sibling site uses, proposed for the first release and derived with bun run site:accent (dark accent raised to #8aabf6 for code-block contrast); the maintainer may pick another before publishing.",
-    "accentLight": "#2563eb",
-    "accentDark": "#8aabf6"
+    "source": "The maintainer asked in chat on 2026-11-19 for accents no sibling site shares; blue (#1d4ed8 / #60a5fa) replaces #2563eb / #8aabf6, both above 4.5:1 against the theme background and button text.",
+    "accentLight": "#1d4ed8",
+    "accentDark": "#60a5fa"
   },
   "sources": [
     {

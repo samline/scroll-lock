@@ -132,7 +132,7 @@ ${lightDismiss}`,
 ${page}`,
       css: `${pageCss}
 .toolbar { position: fixed; inset: 0 0 auto; z-index: 1; display: flex; gap: 0.5rem; align-items: center; padding: 0.75rem 1rem; padding-right: calc(1rem + var(--scroll-lock-gap, 0px)); background: #fff; border-bottom: 1px solid #ddd; }
-[aria-expanded='true'] { background: #2563eb; color: #fff; }
+[aria-expanded='true'] { background: #1d4ed8; color: #fff; }
 /* Below the toolbar, so both buttons stay in reach. */
 .panel { position: fixed; inset: 3.5rem auto 0; width: min(18rem, calc(100vw - 3rem)); height: auto; margin: 0; padding: 1rem; box-sizing: border-box; border: 0; background: #fff; box-shadow: 0 0 2rem rgb(0 0 0 / 0.2); }
 #cart { right: 0; }
