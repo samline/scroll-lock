@@ -147,6 +147,24 @@ for (const button of document.querySelectorAll('[data-checkout-panel]')) {
 }
 document.querySelector('[data-open-countries]').addEventListener('click', () => panels.get('countries')(true))`
 
+const panelCss = `.panel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.panel-scroll { box-sizing: border-box; max-block-size: 13rem; overflow: auto; overscroll-behavior: contain; border: 1px solid #ddd; padding: 0.75rem; }
+[data-scroll-lock-state='locked'].panel-scroll { border-color: #1d4ed8; }
+.editor-controls { position: sticky; top: 0; background: white; display: flex; flex-wrap: wrap; gap: 0.5rem; padding-block: 0.75rem; }
+@media (width < 36rem) { .panel-grid { grid-template-columns: minmax(0, 1fr); } }`
+
+const editorScript = (
+  api: string
+) => `for (const button of document.querySelectorAll('[data-editor-lock]')) {
+  const target = button.getAttribute('aria-controls')
+  const scope = target ? '#' + target : undefined
+  const lock = ${api}createScrollLock(scope ? { target: scope } : {})
+  button.addEventListener('click', () => {
+    lock.toggle()
+    button.setAttribute('aria-pressed', String(${api}isScrollLocked(scope)))
+  })
+}`
+
 export default [
   {
     id: 'dialog',
@@ -354,6 +372,73 @@ ${checkoutScript}`,
 autoScrollLock()
 
 ${checkoutScript}`,
+    },
+  },
+  {
+    id: 'inbox',
+    tab: 'Inbox panel',
+    title: 'Freeze the inbox while you read a message',
+    description:
+      'Open the reading controls to lock the message list. The message and page can still scroll. Close the controls to release the list.',
+    files: {
+      html: `<div class="page">
+  <details data-scroll-lock data-scroll-lock-target="#inbox-list">
+    <summary>Freeze inbox list</summary>
+    <p>The message stays scrollable while the inbox list is paused.</p>
+  </details>
+  <div class="panel-grid">
+    <div>
+      <h2 id="inbox-title">Inbox</h2>
+      <div id="inbox-list" class="panel-scroll" tabindex="0" role="region" aria-labelledby="inbox-title">
+${paragraphs(14, 'Message')}
+      </div>
+    </div>
+    <div>
+      <h2 id="message-title">Message</h2>
+      <div class="panel-scroll" tabindex="0" role="region" aria-labelledby="message-title">
+${paragraphs(14, 'Conversation reply')}
+      </div>
+    </div>
+  </div>
+</div>
+${page}`,
+      css: `${pageCss}\n${panelCss}`,
+      js: '// The browser bundle watches the details element automatically.',
+      esm: `import { autoScrollLock } from '@samline/scroll-lock'\n\nautoScrollLock()`,
+    },
+  },
+  {
+    id: 'editor',
+    tab: 'Independent panels',
+    title: 'Lock either editor panel or the whole page',
+    description:
+      'Scroll the Source and Preview panels, then toggle their locks independently. The page lock is a third scope. Unlock them in any order and each panel returns to its own position.',
+    files: {
+      html: `<div class="page">
+  <div class="editor-controls" role="group" aria-label="Editor locks">
+    <button type="button" aria-controls="source" aria-pressed="false" data-editor-lock>Lock source</button>
+    <button type="button" aria-controls="preview" aria-pressed="false" data-editor-lock>Lock preview</button>
+    <button type="button" aria-pressed="false" data-editor-lock>Lock page</button>
+  </div>
+  <div class="panel-grid">
+    <div>
+      <h2 id="source-title">Source</h2>
+      <div id="source" class="panel-scroll" tabindex="0" role="region" aria-labelledby="source-title">
+${paragraphs(16, 'Source line')}
+      </div>
+    </div>
+    <div>
+      <h2 id="preview-title">Preview</h2>
+      <div id="preview" class="panel-scroll" tabindex="0" role="region" aria-labelledby="preview-title">
+${paragraphs(16, 'Preview paragraph')}
+      </div>
+    </div>
+  </div>
+</div>
+${page}`,
+      css: `${pageCss}\n${panelCss}`,
+      js: editorScript('ScrollLock.'),
+      esm: `import { createScrollLock, isScrollLocked } from '@samline/scroll-lock'\n\n${editorScript('')}`,
     },
   },
 ]

@@ -41,7 +41,7 @@ const sections = {
     description:
       'Mark a dialog with data-scroll-lock, or call lockScroll(), and the page behind it stops scrolling without jumping sideways, even on iPhone.',
     descriptionContinuation: 'Install it, try the live preview, then read the full reference.',
-    footnotes: ['Under 5 KB gzip', 'Zero dependencies', `${project.license} licensed`],
+    footnotes: ['Under 6 KB gzip', 'Zero dependencies', `${project.license} licensed`],
     compatibilityLabel: 'ONE SMALL SCRIPT. RIGHT AT HOME IN YOUR STACK.',
     platforms: ['JavaScript', 'TypeScript', 'Shopify', 'WordPress'],
   },

@@ -28,6 +28,9 @@ describe('without a DOM', () => {
     resetScrollLock()
     expect(isScrollLocked()).toBe(false)
     expect(getScrollLockState()).toEqual({ locked: false, count: 0 })
+    lockScroll({ target: '#panel' })()
+    resetScrollLock('#panel')
+    expect(getScrollLockState('#panel')).toEqual({ locked: false, count: 0 })
   })
 
   it('loads the browser global without side effects on the DOM', async () => {

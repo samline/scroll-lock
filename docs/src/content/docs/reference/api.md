@@ -13,12 +13,12 @@ sidebar:
 ```ts
 lockScroll(options?: ScrollLockLifecycleOptions): () => void
 
-interface ScrollLockLifecycleOptions extends ScrollLockRegionOptions {
+interface ScrollLockLifecycleOptions extends ScrollLockScopeOptions {
   signal?: AbortSignal
 }
 ```
 
-Locks the page and returns the release. See [Options](../configuration/).
+Locks the page or the `target` panel and returns the release. See [Options](../configuration/).
 
 ```js
 import { lockScroll } from '@samline/scroll-lock'
@@ -54,7 +54,7 @@ Pass `signal` to destroy the controller when the signal aborts, even if it is cu
 ```ts
 scrollLock(target: Element | string | Iterable<Element> | ArrayLike<Element>, options?: ScrollLockWatchOptions): ScrollLockController
 
-interface ScrollLockWatchOptions extends ScrollLockRegionOptions {
+interface ScrollLockWatchOptions extends ScrollLockScopeOptions {
   isOpen?: (element: Element) => boolean
 }
 
@@ -65,7 +65,7 @@ interface ScrollLockController {
 }
 ```
 
-Locks the page while an element is open. Each element holds its own lock, so several watched elements unlock in any order. An element counts as open when:
+Locks the page or `options.target` while a watched element is open. Each watched element holds its own lock, so several watched elements unlock in any order. An element counts as open when:
 
 - `<dialog>` and `<details>`: it has the `open` attribute.
 - `[popover]`: it matches `:popover-open`.
@@ -87,18 +87,18 @@ interface AutoScrollLockOptions extends ScrollLockWatchOptions {
 
 Watches every `[data-scroll-lock]` element inside `root` (the document by default), as `scrollLock` does. With `observe` (the default), elements added later are watched too, and the lock of an element removed from the page is released. `refresh()` picks up elements added while `observe` is `false`.
 
-## isScrollLocked()
+## isScrollLocked(target?)
 
 ```ts
-isScrollLocked(): boolean
+isScrollLocked(target?: ScrollLockTarget): boolean
 ```
 
-`true` while any lock is held, by any function of the package.
+Returns `true` while the page or the specified panel holds at least one lock. The page is the default scope.
 
-## getScrollLockState()
+## getScrollLockState(target?)
 
 ```ts
-getScrollLockState(): ScrollLockState
+getScrollLockState(target?: ScrollLockTarget): ScrollLockState
 
 interface ScrollLockState {
   readonly locked: boolean
@@ -106,15 +106,15 @@ interface ScrollLockState {
 }
 ```
 
-Returns a fresh snapshot of all active page locks held by this package, including declarative watchers. Call again to read the new count after an acquisition or release. Without a DOM the snapshot is `{ locked: false, count: 0 }`.
+Returns a fresh snapshot for the page or the specified panel, including declarative locks in that scope. Call again to read the new count after an acquisition or release. Without a DOM the snapshot is `{ locked: false, count: 0 }`.
 
-## resetScrollLock()
+## resetScrollLock(target?)
 
 ```ts
-resetScrollLock(): void
+resetScrollLock(target?: ScrollLockTarget): void
 ```
 
-Releases every lock at once, for example after a client-side navigation unmounted an overlay without its cleanup. Controllers that held a lock report `isLocked() === false` and can lock again; watched elements get `data-scroll-lock-state="unlocked"` and lock again on their next change.
+With a panel element or selector, releases locks for that panel. With the argument omitted, releases all page and panel locks. Controllers whose locks were released can lock again. Watched elements reflect the release and can reacquire on their next change.
 
 ## isOpenElement(element)
 
@@ -140,7 +140,7 @@ The default `isOpen` of `scrollLock`, exported to build on: `isOpen: el => isOpe
 
 ## Types
 
-`ScrollLockOptions`, `ScrollLockRegionOptions`, `ScrollLockRegions`, `ScrollLockLifecycleOptions`, `ScrollLockState`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
+`ScrollLockOptions`, `ScrollLockTarget`, `ScrollLockScopeOptions`, `ScrollLockRegionOptions`, `ScrollLockRegions`, `ScrollLockLifecycleOptions`, `ScrollLockState`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
 
 ## window.ScrollLock
 
@@ -149,7 +149,7 @@ The browser bundle (`dist/browser/scroll-lock.global.js`) defines `window.Scroll
 | Member                                                                                                | Purpose                                                                         |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `lockScroll`, `createScrollLock`, `scrollLock`, `autoScrollLock`, `isScrollLocked`, `resetScrollLock` | The functions above.                                                            |
-| `getScrollLockState()`                                                                                | Snapshot of the active page locks.                                              |
+| `getScrollLockState(target?)`                                                                         | Snapshot of the active locks for the page or panel.                             |
 | `lock()`, `unlock()`                                                                                  | One shared lock for inline handlers. `lock()` twice still needs one `unlock()`. |
 | `auto(options?)`                                                                                      | Start (or restart) watching `[data-scroll-lock]`. Returns the controller.       |
 | `controller`                                                                                          | The controller of the automatic run, or `null`.                                 |

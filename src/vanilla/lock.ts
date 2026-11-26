@@ -2,19 +2,26 @@ import { isBrowser, noop } from '@samline/internal'
 
 import {
   GAP_PROPERTY,
-  STATE_ATTRIBUTE,
   resolveMode,
   resolveOptions,
   usesPositionFixed,
 } from '../core/scroll-lock.js'
 import type { PlatformInfo } from '../core/scroll-lock.js'
 import { chain, pinBody, preventScrollMobileSafari, setStyle } from './ios.js'
+import { lockPanel, resolveLockTarget } from './panel.js'
+import type { ScrollLockTarget } from './panel.js'
 import { registerScrollRegions } from './regions.js'
 import type { ScrollLockRegionOptions } from './regions.js'
+import { markLocked } from './state.js'
 
 type Cleanup = () => void
 
-export interface ScrollLockLifecycleOptions extends ScrollLockRegionOptions {
+export interface ScrollLockScopeOptions extends ScrollLockRegionOptions {
+  /** An independent scroll container. Omit to lock the page. */
+  target?: ScrollLockTarget
+}
+
+export interface ScrollLockLifecycleOptions extends ScrollLockScopeOptions {
   /** Abort to release an individual lock or destroy its controller. */
   signal?: AbortSignal
 }
@@ -45,8 +52,9 @@ const acquire = (effect: Shared, apply: () => Cleanup): Cleanup => {
   }
 }
 
-/** Every held lock, so `resetScrollLock()` can release them all. */
-const holders = new Set<Cleanup>()
+const panels = new WeakMap<HTMLElement, Shared>()
+/** Every held lock and its scope, in acquisition order. */
+const holders = new Map<Cleanup, HTMLElement | undefined>()
 
 const platform = (): PlatformInfo => ({
   userAgent: navigator.userAgent,
@@ -61,16 +69,6 @@ const scrollbarGap = (): number => {
   const html = document.documentElement
   if (/stable/.test(getComputedStyle(html).getPropertyValue('scrollbar-gutter'))) return 0
   return Math.max(0, window.innerWidth - html.clientWidth)
-}
-
-const markLocked = (): Cleanup => {
-  const html = document.documentElement
-  const previous = html.getAttribute(STATE_ATTRIBUTE)
-  html.setAttribute(STATE_ATTRIBUTE, 'locked')
-  return () => {
-    if (previous === null) html.removeAttribute(STATE_ATTRIBUTE)
-    else html.setAttribute(STATE_ATTRIBUTE, previous)
-  }
 }
 
 const lockOverflow = (reserveGap: boolean): Cleanup => {
@@ -93,13 +91,13 @@ const lockIOS = (reserveGap: boolean): Cleanup => {
   )
 }
 
-const acquireScrollLock = (options: ScrollLockRegionOptions, signal?: AbortSignal): Cleanup => {
+const acquirePage = (options: ScrollLockRegionOptions): Cleanup => {
   const { mode, reserveGap, positionFixed } = resolveOptions(options)
   const info = platform()
 
   // Pin first: the iOS workaround scrolls to the top, and the pin has to
   // capture the real position before that.
-  const marked = acquire(state, markLocked)
+  const marked = acquire(state, () => markLocked(document.documentElement))
   const pinned = usesPositionFixed(positionFixed, info) ? acquire(fixed, pinBody) : null
   const locked =
     resolveMode(mode, info) === 'ios'
@@ -109,41 +107,77 @@ const acquireScrollLock = (options: ScrollLockRegionOptions, signal?: AbortSigna
   const forgetRegions = regions === undefined ? null : registerScrollRegions(() => regions)
 
   // Release in reverse: the iOS workaround scrolls back before the unpin.
+  return chain(forgetRegions, locked, pinned, marked)
+}
+
+const acquirePanel = (target: HTMLElement, options: ScrollLockScopeOptions): Cleanup => {
+  let effect = panels.get(target)
+  if (!effect) {
+    effect = shared()
+    panels.set(target, effect)
+  }
+  return acquire(effect, () => lockPanel(target, options.reserveGap ?? true))
+}
+
+const acquireScrollLock = (
+  options: ScrollLockScopeOptions,
+  target: HTMLElement | undefined,
+  signal?: AbortSignal,
+  onRelease?: Cleanup
+): Cleanup => {
+  const undo = target ? acquirePanel(target, options) : acquirePage(options)
   const release = (): void => {
     if (!holders.delete(release)) return
     signal?.removeEventListener('abort', release)
-    chain(forgetRegions, locked, pinned, marked)()
+    chain(undo, onRelease)()
   }
-  holders.add(release)
+  holders.set(release, target)
   if (signal?.aborted) release()
   else signal?.addEventListener('abort', release)
   return release
 }
 
-/** Lock the page until released or aborted. The release is idempotent. */
-export const lockScroll = (options: ScrollLockLifecycleOptions = {}): Cleanup =>
-  isBrowser() && !options.signal?.aborted ? acquireScrollLock(options, options.signal) : noop
+/** Lock the page or a panel until released or aborted. */
+export const lockScroll = (options: ScrollLockLifecycleOptions = {}): Cleanup => {
+  if (!isBrowser() || options.signal?.aborted) return noop
+  const target = resolveLockTarget(options.target)
+  return target === null || target?.isConnected === false
+    ? noop
+    : acquireScrollLock(options, target, options.signal)
+}
 
-/** True while at least one lock is held. */
-export const isScrollLocked = (): boolean => holders.size > 0
+const lockCount = (target?: ScrollLockTarget): number => {
+  if (target === undefined) return state.count
+  if (!isBrowser()) return 0
+  const element = resolveLockTarget(target)
+  return element ? (panels.get(element)?.count ?? 0) : 0
+}
+
+/** True while at least one lock is held for this scope. */
+export const isScrollLocked = (target?: ScrollLockTarget): boolean => lockCount(target) > 0
 
 export interface ScrollLockState {
   readonly locked: boolean
   readonly count: number
 }
 
-/** Snapshot of the page's currently held locks. */
-export const getScrollLockState = (): ScrollLockState => ({
-  locked: isScrollLocked(),
-  count: holders.size,
-})
+/** Snapshot of currently held locks for the page or the requested panel. */
+export const getScrollLockState = (target?: ScrollLockTarget): ScrollLockState => {
+  const count = lockCount(target)
+  return { locked: count > 0, count }
+}
 
 /**
  * Release every lock at once, for example after a client-side navigation left
  * one behind. Controllers that held one report themselves unlocked.
  */
-export const resetScrollLock = (): void => {
-  for (const holder of Array.from(holders).reverse()) holder()
+export const resetScrollLock = (target?: ScrollLockTarget): void => {
+  if (target !== undefined && !isBrowser()) return
+  const scope = target === undefined ? undefined : resolveLockTarget(target, document)
+  if (scope === null) return
+  for (const [release, lockedTarget] of Array.from(holders).reverse()) {
+    if (scope === undefined || scope === lockedTarget) release()
+  }
   for (const listener of Array.from(resetListeners)) listener()
 }
 
@@ -178,15 +212,13 @@ export const createScrollLock = (options: ScrollLockLifecycleOptions = {}): Scro
   let release: Cleanup | null = null
   let destroyed = signal?.aborted ?? false
   const active = !destroyed && isBrowser()
-  const stopReset = active
-    ? onReset(() => {
-        release = null
-      })
-    : noop
-
   const lock = () => {
     if (destroyed || release || !isBrowser()) return
-    release = acquireScrollLock(options)
+    const target = resolveLockTarget(options.target)
+    if (target === null || target?.isConnected === false) return
+    release = acquireScrollLock(options, target, undefined, () => {
+      release = null
+    })
     if (destroyed) unlock()
   }
   const unlock = () => {
@@ -197,7 +229,6 @@ export const createScrollLock = (options: ScrollLockLifecycleOptions = {}): Scro
     if (destroyed) return
     destroyed = true
     signal?.removeEventListener('abort', destroy)
-    stopReset()
     unlock()
   }
   if (active) signal?.addEventListener('abort', destroy)

@@ -2,6 +2,14 @@
 
 All notable changes to this package. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [semver](https://semver.org/).
 
+## [1.3.0] - 2026-11-25
+
+### Added
+
+- Lock individual scroll containers with `target` or `data-scroll-lock-target`. Each panel keeps its own lock count, scrollbar gutter and scroll position.
+- Query or reset a panel by passing its element or selector to `isScrollLocked`, `getScrollLockState` or `resetScrollLock`.
+- Live and copyable inbox and two-panel editor examples.
+
 ## [1.2.0] - 2026-11-25
 
 ### Added

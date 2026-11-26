@@ -220,4 +220,68 @@ test.describe('scroll-lock copyable examples', () => {
     await picker.click()
     await expect.poll(() => locked(page)).toBeNull()
   })
+
+  test('freezes the inbox while its message and the page stay scrollable', async ({ page }) => {
+    await open(page, 'inbox')
+    const inbox = page.getByRole('region', { name: 'Inbox' })
+    const message = page.getByRole('region', { name: 'Message', exact: true })
+    const toggle = page.getByText('Freeze inbox list', { exact: true })
+    await inbox.evaluate(el => {
+      el.scrollTop = 100
+    })
+    await toggle.click()
+    await expect(inbox).toHaveAttribute('data-scroll-lock-state', 'locked')
+    expect(await locked(page)).toBeNull()
+    await inbox.hover()
+    await page.mouse.wheel(0, 100)
+    await message.press('PageDown')
+    await expect.poll(() => message.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+    expect(await inbox.evaluate(el => el.scrollTop)).toBe(100)
+    await toggle.press('PageDown')
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+    await toggle.click()
+    await expect(inbox).not.toHaveAttribute('data-scroll-lock-state', /./)
+  })
+
+  test('restores the two editor panel positions in any release order', async ({ page }) => {
+    await open(page, 'editor')
+    const source = page.getByRole('region', { name: 'Source' })
+    const preview = page.getByRole('region', { name: 'Preview' })
+    const sourceLock = page.getByRole('button', { name: 'Lock source' })
+    const previewLock = page.getByRole('button', { name: 'Lock preview' })
+    const pageLock = page.getByRole('button', { name: 'Lock page' })
+    const initialWidth = await source.evaluate(el => {
+      el.scrollTop = 80
+      ;(el as HTMLElement).style.setProperty('--scroll-lock-gap', '2px', 'important')
+      return el.clientWidth
+    })
+    await preview.evaluate(el => {
+      el.scrollTop = 120
+    })
+    await sourceLock.click()
+    await previewLock.click()
+    expect(await locked(page)).toBeNull()
+    expect(await source.evaluate(el => el.clientWidth)).toBe(initialWidth)
+    await pageLock.click()
+    expect(await locked(page)).toBe('locked')
+    await source.evaluate(el => {
+      el.scrollTop = 200
+    })
+    await preview.evaluate(el => {
+      el.scrollTop = 240
+    })
+
+    await previewLock.click()
+    expect(await preview.evaluate(el => el.scrollTop)).toBe(120)
+    await expect(source).toHaveAttribute('data-scroll-lock-state', 'locked')
+    await pageLock.click()
+    expect(await locked(page)).toBeNull()
+    await sourceLock.click()
+    expect(await source.evaluate(el => el.scrollTop)).toBe(80)
+    expect(
+      await source.evaluate(el =>
+        (el as HTMLElement).style.getPropertyPriority('--scroll-lock-gap')
+      )
+    ).toBe('important')
+  })
 })

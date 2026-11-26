@@ -54,6 +54,31 @@ Set a bounded size and `overflow: auto` on each region. Use `overscroll-behavior
 }
 ```
 
+## Panel targets
+
+Pass a connected HTML scroll container in the current document or a CSS selector in `target`. Omitting `target` locks the page.
+
+```ts
+type ScrollLockTarget = HTMLElement | string
+
+interface ScrollLockScopeOptions extends ScrollLockRegionOptions {
+  target?: ScrollLockTarget
+}
+```
+
+```html
+<details data-scroll-lock data-scroll-lock-target="#inbox-list">
+  <summary>Freeze inbox list</summary>
+</details>
+<div id="inbox-list" class="checkout-list" tabindex="0" role="region" aria-label="Inbox">…</div>
+```
+
+The `target` is the container receiving the lock. The `root` option of `autoScrollLock` scopes the search for watched elements. A target selector in JavaScript resolves when the lock is acquired. When a selector belongs to a watched element, the search runs in its document or shadow root. Call `refresh()` on its watcher if you replace the target while the overlay stays open. A missing or invalid target, including an empty selector, acquires no lock.
+
+The first lock on a panel sets its gutter policy and records its horizontal and vertical positions. The last one restores the positions and the original inline styles. When `reserveGap` is enabled, the panel keeps its native gutter where supported. Panel locks use local overflow and gutter styles. `mode`, `positionFixed` and `allowScroll` apply to page locks. Nested scroll containers keep their native behavior. An application can still set a panel's position programmatically while it is locked.
+
+Queries without a target read the page. A reset without a target releases both page and panel locks. Pass a panel to reset it independently. See the [inbox](../../guides/examples/#guide-inbox) and [editor](../../guides/examples/#guide-editor) examples.
+
 ## Attributes
 
 | Attribute                         | Values                      | Effect                                                      |
@@ -63,6 +88,7 @@ Set a bounded size and `overflow: auto` on each region. Use `overscroll-behavior
 | `data-scroll-lock-gap`            | `true`, `false`             | `reserveGap` for this element.                              |
 | `data-scroll-lock-position-fixed` | `never`, `safari`, `always` | `positionFixed` for this element.                           |
 | `data-scroll-lock-allow`          | CSS selector list or empty  | Override `allowScroll` for this element.                    |
+| `data-scroll-lock-target`         | CSS selector                | Override `target` for this element.                         |
 
 Attributes win over options. Changing one while the element is open takes the new lock before releasing the old one, so the page never unlocks in between.
 
@@ -74,8 +100,11 @@ Attributes win over options. Changing one while the element is open takes the ne
 
 | Where           | Attribute                | Values                                                  |
 | --------------- | ------------------------ | ------------------------------------------------------- |
-| `<html>`        | `data-scroll-lock-state` | `locked` while any lock is held, absent otherwise.      |
+| `<html>`        | `data-scroll-lock-state` | `locked` while a page lock is held.                     |
 | Watched element | `data-scroll-lock-state` | `locked` while it holds its lock, `unlocked` otherwise. |
+| Target panel    | `data-scroll-lock-state` | `locked` while a panel lock is held.                    |
+
+When an element is both a watcher and a locked panel, its state stays `locked` until it meets neither condition. Cleanup restores its original attribute.
 
 ```css
 html[data-scroll-lock-state='locked'] .chat-widget {
@@ -92,3 +121,5 @@ While locked, `<html>` carries `--scroll-lock-gap`: the width of the scrollbar t
   padding-right: var(--scroll-lock-gap, 0px);
 }
 ```
+
+A locked panel exposes the same property with its own measured inline gutter. The panel reserves its space through `scrollbar-gutter`, so its contents can rely on that gutter without adding padding.

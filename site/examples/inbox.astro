@@ -1,0 +1,51 @@
+---
+import './_shared.css'
+import './_panels.css'
+---
+
+<div class="scroll-lock-example">
+  <details data-inbox-controls data-scroll-lock-target="#scroll-lock-inbox-list">
+    <summary>Freeze inbox list</summary>
+    <p class="hint">The message stays scrollable while the inbox list is paused.</p>
+  </details>
+  <div class="panel-grid">
+    <div>
+      <h3 class="part-title" id="scroll-lock-inbox-title">
+        Inbox
+      </h3>
+      <div
+        id="scroll-lock-inbox-list"
+        class="list panel-scroll"
+        tabindex="0"
+        role="region"
+        aria-labelledby="scroll-lock-inbox-title"
+      >
+        {Array.from({ length: 14 }, (_, index) => (
+          <p>Message {index + 1}</p>
+        ))}
+      </div>
+    </div>
+    <div>
+      <h3 class="part-title" id="scroll-lock-message-title">
+        Message
+      </h3>
+      <div
+        class="list panel-scroll"
+        tabindex="0"
+        role="region"
+        aria-labelledby="scroll-lock-message-title"
+      >
+        {Array.from({ length: 14 }, (_, index) => (
+          <p>Conversation reply {index + 1}</p>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { scrollLock } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('inbox', stage => scrollLock(stage.querySelector('[data-inbox-controls]')!))
+</script>

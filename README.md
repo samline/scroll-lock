@@ -86,7 +86,7 @@ For Shopify, WordPress or plain HTML pages without a build step, load the browse
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.2.0/dist/browser/scroll-lock.global.js"
+  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.3.0/dist/browser/scroll-lock.global.js"
   defer
 ></script>
 ```
@@ -116,6 +116,20 @@ Keep selected lists or panels scrollable while the page is locked. Pass an eleme
 
 Give each region a bounded size and `overflow: auto`. The latest active lock that specifies regions controls wheel, touch and scrolling keys. Closing it restores the prior policy. See [Options](https://samline.github.io/scroll-lock/docs/reference/configuration/#allowed-scroll-regions) for boundary behavior and an empty allowlist.
 
+### Independent panel locks
+
+Freeze a message list while its reader and the page can still scroll:
+
+```js
+import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
+
+const release = lockScroll({ target: '#inbox-list' })
+const { count } = getScrollLockState('#inbox-list')
+closeReader.addEventListener('click', release, { once: true })
+```
+
+Use an element or selector in `target`, or set `data-scroll-lock-target` on a watched element. Each panel restores its own position when its last lock is released. Call `resetScrollLock(panel)` to release that panel's locks together. The zero-argument reset releases all locks.
+
 ### No layout shift
 
 When the scrollbar disappears, its width moves to `<body>`'s right padding, so the content does not jump sideways. The same width is available as `--scroll-lock-gap` for fixed headers and toolbars. Pages that already reserve the gutter with `scrollbar-gutter: stable` are left alone.
@@ -140,13 +154,14 @@ The page keeps its scroll position while locked and after, even with `scroll-beh
 | `createScrollLock(options?)`   | One lock for a component: `{ lock, unlock, toggle, isLocked, destroy }`.                          |
 | `scrollLock(target, options?)` | Lock while an element is open. Returns `{ refresh, isLocked, destroy }`.                          |
 | `autoScrollLock(options?)`     | Watch every `[data-scroll-lock]`, including elements added later. Returns `{ refresh, destroy }`. |
-| `isScrollLocked()`             | Whether any lock is held.                                                                         |
-| `getScrollLockState()`         | A snapshot with `{ locked, count }` for active page locks.                                        |
-| `resetScrollLock()`            | Release every lock, for example after a client-side navigation.                                   |
+| `isScrollLocked(target?)`      | Whether the page or specified panel holds any locks.                                              |
+| `getScrollLockState(target?)`  | A `{ locked, count }` snapshot for the page or specified panel.                                   |
+| `resetScrollLock(target?)`     | Release the specified panel’s locks, or every lock when omitted.                                  |
 | `mode`                         | `'auto'` (default), `'overflow'` or `'ios'`.                                                      |
 | `reserveGap`                   | Compensate the scrollbar width. Defaults to `true`.                                               |
 | `positionFixed`                | Pin `<body>`: `'never'` (default), `'safari'` or `'always'`.                                      |
 | `allowScroll`                  | Scroll regions for this lock, as elements, selectors or an array.                                 |
+| `target`                       | Lock one scroll container by element or CSS selector.                                             |
 
 ### Entrypoints
 

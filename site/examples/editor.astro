@@ -1,0 +1,68 @@
+---
+import './_shared.css'
+import './_panels.css'
+
+const panels = [
+  { id: 'source', label: 'Source', row: 'Source line' },
+  { id: 'preview', label: 'Preview', row: 'Preview paragraph' },
+]
+---
+
+<div class="scroll-lock-example">
+  <div class="controls" role="group" aria-label="Editor locks">
+    {panels.map(panel => (
+      <button
+        type="button"
+        class="pill"
+        data-editor-lock
+        aria-controls={`scroll-lock-editor-${panel.id}`}
+        aria-pressed="false"
+      >
+        Lock {panel.label.toLowerCase()}
+      </button>
+    ))}
+    <button type="button" class="pill" data-editor-lock aria-pressed="false">
+      Lock page
+    </button>
+  </div>
+  <div class="panel-grid">
+    {panels.map(panel => (
+      <div>
+        <h3 class="part-title" id={`scroll-lock-editor-${panel.id}-title`}>
+          {panel.label}
+        </h3>
+        <div
+          id={`scroll-lock-editor-${panel.id}`}
+          class="list panel-scroll"
+          tabindex="0"
+          role="region"
+          aria-labelledby={`scroll-lock-editor-${panel.id}-title`}
+        >
+          {Array.from({ length: 16 }, (_, index) => (
+            <p>
+              {panel.row} {index + 1}
+            </p>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<script>
+  import { createScrollLock, isScrollLocked } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('editor', stage =>
+    Array.from(stage.querySelectorAll<HTMLButtonElement>('[data-editor-lock]'), button => {
+      const id = button.getAttribute('aria-controls')
+      const target = id ? stage.querySelector<HTMLElement>(`#${id}`)! : undefined
+      const lock = createScrollLock(target ? { target } : {})
+      button.addEventListener('click', () => {
+        lock.toggle()
+        button.setAttribute('aria-pressed', String(isScrollLocked(target)))
+      })
+      return lock
+    })
+  )
+</script>

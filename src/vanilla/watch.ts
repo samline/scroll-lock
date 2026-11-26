@@ -1,19 +1,15 @@
 import { autoInit, isBrowser, readBoolean, readEnum, resolveElements } from '@samline/internal'
 import type { AutoInitController, ElementTarget } from '@samline/internal'
 
-import {
-  ATTRIBUTE,
-  MODES,
-  POSITION_FIXED,
-  STATE_ATTRIBUTE,
-  resolveOptions,
-} from '../core/scroll-lock.js'
+import { ATTRIBUTE, MODES, POSITION_FIXED, resolveOptions } from '../core/scroll-lock.js'
 import type { ScrollLockOptions } from '../core/scroll-lock.js'
 import { createScrollLock, onReset } from './lock.js'
+import type { ScrollLockScopeOptions } from './lock.js'
+import { resolveLockTarget } from './panel.js'
 import { refreshScrollRegions, registerScrollRegions } from './regions.js'
-import type { ScrollLockRegionOptions } from './regions.js'
+import { trackLockState } from './state.js'
 
-export interface ScrollLockWatchOptions extends ScrollLockRegionOptions {
+export interface ScrollLockWatchOptions extends ScrollLockScopeOptions {
   /**
    * Whether the element counts as open. By default: the `open` attribute on
    * `<dialog>` and `<details>`, `:popover-open` on popovers, and for any other
@@ -40,6 +36,7 @@ export interface ScrollLockController {
 
 /** Attributes whose changes can open or close an element. */
 const ALLOW = `${ATTRIBUTE}-allow`
+const TARGET = `${ATTRIBUTE}-target`
 const WATCHED = [
   'open',
   'hidden',
@@ -51,6 +48,7 @@ const WATCHED = [
   `${ATTRIBUTE}-gap`,
   `${ATTRIBUTE}-position-fixed`,
   ALLOW,
+  TARGET,
 ]
 
 const isPopoverOpen = (element: Element): boolean => {
@@ -90,9 +88,10 @@ const watchOne = (
   options: ScrollLockWatchOptions
 ): { refresh: () => void; isLocked: () => boolean; destroy: () => void } => {
   const isOpen = options.isOpen ?? isOpenElement
-  const previous = element.getAttribute(STATE_ATTRIBUTE)
+  const state = trackLockState(element, 'unlocked')
   let current = readOptions(element, options)
   let applied = JSON.stringify(current)
+  let target: HTMLElement | null | undefined
   let lock = createScrollLock(current)
   let forgetRegions: (() => void) | undefined
 
@@ -102,27 +101,37 @@ const watchOne = (
   }
 
   const refresh = () => {
+    const root = element.isConnected
+      ? (element.getRootNode() as Document | ShadowRoot)
+      : element.ownerDocument
+    const next = resolveLockTarget(element.getAttribute(TARGET) ?? options.target, root)
     // `data-scroll-lock="false"` turns the element off without removing it.
-    const wanted = readBoolean(element, ATTRIBUTE, true) && element.isConnected && isOpen(element)
+    const wanted =
+      next !== null &&
+      next?.isConnected !== false &&
+      readBoolean(element, ATTRIBUTE, true) &&
+      element.isConnected &&
+      isOpen(element)
     current = readOptions(element, options)
     const key = JSON.stringify(current)
-    if (key !== applied) {
+    if (key !== applied || next !== target) {
       // Changed options: take the new lock before releasing the old one, so
       // the page never unlocks in between.
       const old = lock
-      lock = createScrollLock(current)
+      lock = createScrollLock(next ? { ...current, target: next } : current)
       applied = key
+      target = next
       if (wanted) lock.lock()
       old.destroy()
     }
     lock.toggle(wanted)
-    if (!lock.isLocked()) clearRegions()
+    if (!lock.isLocked() || target) clearRegions()
     else if (forgetRegions) refreshScrollRegions()
     else
       forgetRegions = registerScrollRegions(
         () => element.getAttribute(ALLOW) ?? options.allowScroll
       )
-    element.setAttribute(STATE_ATTRIBUTE, lock.isLocked() ? 'locked' : 'unlocked')
+    state.update(lock.isLocked())
   }
 
   const observer = new MutationObserver(refresh)
@@ -132,8 +141,9 @@ const watchOne = (
 
   // resetScrollLock() released the lock behind this element's back.
   const stopReset = onReset(() => {
+    if (lock.isLocked()) return
     clearRegions()
-    element.setAttribute(STATE_ATTRIBUTE, 'unlocked')
+    state.update(false)
   })
 
   refresh()
@@ -152,8 +162,7 @@ const watchOne = (
       stopReset()
       clearRegions()
       lock.destroy()
-      if (previous === null) element.removeAttribute(STATE_ATTRIBUTE)
-      else element.setAttribute(STATE_ATTRIBUTE, previous)
+      state.destroy()
     },
   }
 }
@@ -189,10 +198,27 @@ export const scrollLock = (
  */
 export const autoScrollLock = (options: AutoScrollLockOptions = {}): AutoInitController => {
   const { root, observe, ...watch } = options
-  return autoInit({
+  const watchers = new Map<Element, () => void>()
+  const controller = autoInit({
     selector: `[${ATTRIBUTE}]`,
-    init: element => watchOne(element, watch).destroy,
+    init: element => {
+      const watcher = watchOne(element, watch)
+      watchers.set(element, watcher.refresh)
+      return () => {
+        watchers.delete(element)
+        watcher.destroy()
+      }
+    },
     ...(root ? { root } : {}),
     ...(observe === undefined ? {} : { observe }),
   })
+  return {
+    refresh: () => {
+      controller.refresh()
+      for (const [element, refresh] of watchers) {
+        if (watch.target !== undefined || element.hasAttribute(TARGET)) refresh()
+      }
+    },
+    destroy: controller.destroy,
+  }
 }
