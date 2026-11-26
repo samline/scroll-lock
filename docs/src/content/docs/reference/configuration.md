@@ -18,7 +18,9 @@ Every function that locks takes the same options.
 | `reserveGap`    | `boolean`                         | `true`    | Add the removed scrollbar's width to `<body>`'s right padding. Skipped with `scrollbar-gutter: stable`.               |
 | `positionFixed` | `'never' \| 'safari' \| 'always'` | `'never'` | Pin `<body>` with `position: fixed` and scroll back on release. `safari` skips other browsers and installed web apps. |
 
-`scrollLock` and `autoScrollLock` also take `isOpen(element)`; `autoScrollLock` takes `root` and `observe`. See the [API reference](../api/).
+`lockScroll` and `createScrollLock` also take a JavaScript `signal`. Abort it to release the individual lock or destroy the controller, respectively.
+
+`scrollLock` and `autoScrollLock` also take `isOpen(element)`. `autoScrollLock` takes `root` and `observe`. See the [API reference](../api/).
 
 ## Attributes
 

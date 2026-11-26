@@ -65,7 +65,7 @@ describe('browser global', () => {
     const ScrollLock = await load('complete')
     ScrollLock.lock()
     ScrollLock.lock()
-    expect(ScrollLock.isScrollLocked()).toBe(true)
+    expect(ScrollLock.getScrollLockState()).toEqual({ locked: true, count: 1 })
     ScrollLock.unlock()
     expect(ScrollLock.isScrollLocked()).toBe(false)
   })

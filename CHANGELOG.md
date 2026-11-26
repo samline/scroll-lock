@@ -2,6 +2,14 @@
 
 All notable changes to this package. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [semver](https://semver.org/).
 
+## [1.1.0] - 2026-11-25
+
+### Added
+
+- `lockScroll({ signal })` releases its lock on abort. `createScrollLock({ signal })` destroys its controller on abort.
+- `getScrollLockState()` returns a snapshot with `locked` and the active lock `count`, in JavaScript modules and on `window.ScrollLock`.
+- Live and copyable vanilla examples for view cleanup and animated overlay dismissal.
+
 ## [1.0.0] - 2026-11-18
 
 ### Added

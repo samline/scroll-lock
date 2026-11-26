@@ -104,4 +104,67 @@ test.describe('scroll-lock copyable examples', () => {
     await page.mouse.click(20, 400)
     await expect.poll(() => locked(page)).toBeNull()
   })
+
+  test('switching views releases only the outgoing view lock', async ({ page }) => {
+    await open(page, 'navigation')
+    const keep = await page.evaluateHandle(() => {
+      const { ScrollLock } = window as Window & {
+        ScrollLock: import('../../src/browser/global').ScrollLockGlobal
+      }
+      return ScrollLock.lockScroll()
+    })
+    const opener = page.getByRole('button', { name: 'Open project tools' })
+    const status = page.getByRole('status')
+
+    await opener.click()
+    await expect(status).toHaveText('Page locked (2)')
+    await page.getByRole('button', { name: 'Projects', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible()
+    await expect(opener).toHaveAttribute('aria-expanded', 'false')
+    await expect(status).toHaveText('Page locked (1)')
+
+    await keep.evaluate(release => release())
+    await keep.dispose()
+    await opener.click()
+    await expect(status).toHaveText('Page locked (1)')
+    await page.getByRole('button', { name: 'Overview', exact: true }).click()
+    await expect(status).toHaveText('Page scrolls')
+    expect(await locked(page)).toBeNull()
+  })
+
+  test('holds the lock until the menu exit animation settles', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await open(page, 'animated')
+    const opener = page.getByRole('button', { name: 'Open account menu' })
+    const menu = page.getByRole('dialog', { name: 'Account menu' })
+    await opener.press('Enter')
+
+    const animation = await menu.evaluateHandle(dialog => {
+      dialog.querySelector('button')!.click()
+      const exit = dialog.getAnimations()[0]!
+      exit.pause()
+      return exit
+    })
+    await expect(menu).toBeVisible()
+    expect(await locked(page)).toBe('locked')
+    await animation.evaluate(exit => exit.finish())
+    await animation.dispose()
+
+    await expect(menu).toBeHidden()
+    await expect(opener).toBeFocused()
+    expect(await locked(page)).toBeNull()
+  })
+
+  test('Escape closes the menu immediately with reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await open(page, 'animated')
+    const opener = page.getByRole('button', { name: 'Open account menu' })
+    const menu = page.getByRole('dialog', { name: 'Account menu' })
+    await opener.click()
+    await expect(menu).toBeVisible()
+    expect(await locked(page)).toBe('locked')
+    await page.keyboard.press('Escape')
+    await expect(menu).toBeHidden()
+    expect(await locked(page)).toBeNull()
+  })
 })

@@ -19,7 +19,7 @@ export default {
     'getting-started': 'Installation',
     'guides/accessibility': 'Accessibility',
     'guides/examples': 'Examples',
-    'guides/frameworks': 'Framework integrations',
+    'guides/frameworks': 'Lock lifetimes',
     'guides/strategies': 'How it works',
     index: 'Overview',
     'reference/api': 'API reference',

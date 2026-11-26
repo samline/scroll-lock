@@ -1,80 +1,38 @@
 ---
-title: 'Framework integrations'
-titleAccent: 'integrations'
-description: Use @samline/scroll-lock in React, Vue, Svelte and Astro, and release every lock when a client-side router changes the page.
+title: 'Lock lifetimes'
+titleAccent: 'lifetimes'
+description: Release scroll locks on vanilla navigation and keep them held during animated dismissal.
 locale: en
 sidebar:
   group: guides
   order: 4
 ---
 
-`lockScroll()` returns its release, so it fits any cleanup hook. Lock when the overlay opens, release when it closes or unmounts.
+## Release a lock when leaving a view
 
-## React
+Create an abort controller when you open the overlay. Abort it when the view unmounts or navigation replaces it.
 
-```jsx
-import { lockScroll } from '@samline/scroll-lock'
-import { useEffect } from 'react'
+```js
+import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
 
-export function Drawer({ open, children }) {
-  useEffect(() => (open ? lockScroll() : undefined), [open])
-  return open ? <aside className="drawer">{children}</aside> : null
+const lifetime = new AbortController()
+lockScroll({ signal: lifetime.signal })
+
+const leaveView = () => {
+  lifetime.abort()
+  const { count } = getScrollLockState()
+  return count
 }
 ```
 
-## Vue
+Other components keep their locks. Create a fresh abort controller the next time the view opens.
 
-```vue
-<script setup>
-import { lockScroll } from '@samline/scroll-lock'
-import { watchEffect } from 'vue'
+## Keep the lock during animated dismissal
 
-const props = defineProps({ open: Boolean })
+With a modal `<dialog>`, call `showModal()` and acquire the lock. Route the close button and the dialog's native `cancel` request through the same closing code. Keep the dialog open while its animation runs, then close it and release the lock. Skip the animation when the user prefers reduced motion.
 
-watchEffect(onCleanup => {
-  if (props.open) onCleanup(lockScroll())
-})
-</script>
-```
+The [working examples](../examples/) include the full HTML, CSS and JavaScript for both lifetimes, in module and CDN form.
 
-## Svelte
+## Recover after interrupted navigation
 
-```svelte
-<script>
-  import { lockScroll } from '@samline/scroll-lock'
-
-  let { open } = $props()
-
-  $effect(() => {
-    if (open) return lockScroll()
-  })
-</script>
-```
-
-## Astro
-
-```astro
-<dialog id="terms" data-scroll-lock>
-  …
-</dialog>
-
-<script>
-  import { autoScrollLock } from '@samline/scroll-lock'
-
-  autoScrollLock()
-</script>
-```
-
-`autoScrollLock` watches the whole document, so dialogs swapped in by Astro view transitions, swup, Turbo or htmx are picked up without starting it again, and the lock of a dialog removed while open is released.
-
-## Client-side routers
-
-A route change can unmount an overlay without running its cleanup. Release every lock after navigation:
-
-```js
-import { resetScrollLock } from '@samline/scroll-lock'
-
-router.afterEach(() => resetScrollLock())
-```
-
-Controllers that held a lock report themselves unlocked afterwards and can lock again.
+`resetScrollLock()` releases every lock. Use it when you own the entire page and need to recover from missing cleanup. A controller can take a new lock after a reset unless it has been destroyed.

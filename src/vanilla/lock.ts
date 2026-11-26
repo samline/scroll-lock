@@ -12,6 +12,11 @@ import { chain, pinBody, preventScrollMobileSafari, setStyle } from './ios.js'
 
 type Cleanup = () => void
 
+export interface ScrollLockLifecycleOptions extends ScrollLockOptions {
+  /** Abort to release an individual lock or destroy its controller. */
+  signal?: AbortSignal
+}
+
 /**
  * One page-level effect shared by every lock that needs it: applied by the
  * first, undone by the last.
@@ -86,15 +91,7 @@ const lockIOS = (reserveGap: boolean): Cleanup => {
   )
 }
 
-/**
- * Lock the page scroll. Locks nest: the page stays locked until every lock is
- * released, and the first lock's scroll position comes back after the last.
- * Returns the release, which is safe to call more than once.
- *
- * Without a DOM it does nothing and returns a no-op.
- */
-export const lockScroll = (options: ScrollLockOptions = {}): Cleanup => {
-  if (!isBrowser()) return noop
+const acquireScrollLock = (options: ScrollLockOptions, signal?: AbortSignal): Cleanup => {
   const { mode, reserveGap, positionFixed } = resolveOptions(options)
   const info = platform()
 
@@ -110,14 +107,32 @@ export const lockScroll = (options: ScrollLockOptions = {}): Cleanup => {
   // Release in reverse: the iOS workaround scrolls back before the unpin.
   const release = (): void => {
     if (!holders.delete(release)) return
+    signal?.removeEventListener('abort', release)
     chain(locked, pinned, marked)()
   }
   holders.add(release)
+  if (signal?.aborted) release()
+  else signal?.addEventListener('abort', release)
   return release
 }
 
+/** Lock the page until released or aborted. The release is idempotent. */
+export const lockScroll = (options: ScrollLockLifecycleOptions = {}): Cleanup =>
+  isBrowser() && !options.signal?.aborted ? acquireScrollLock(options, options.signal) : noop
+
 /** True while at least one lock is held. */
 export const isScrollLocked = (): boolean => holders.size > 0
+
+export interface ScrollLockState {
+  readonly locked: boolean
+  readonly count: number
+}
+
+/** Snapshot of the page's currently held locks. */
+export const getScrollLockState = (): ScrollLockState => ({
+  locked: isScrollLocked(),
+  count: holders.size,
+})
 
 /**
  * Release every lock at once, for example after a client-side navigation left
@@ -154,30 +169,40 @@ export interface ScrollLock {
  * often as your modal opens and closes, and other controllers' locks are
  * never released by mistake.
  */
-export const createScrollLock = (options: ScrollLockOptions = {}): ScrollLock => {
+export const createScrollLock = (options: ScrollLockLifecycleOptions = {}): ScrollLock => {
+  const { signal } = options
   let release: Cleanup | null = null
-  let destroyed = false
-  const stopReset = onReset(() => {
-    release = null
-  })
+  let destroyed = signal?.aborted ?? false
+  const active = !destroyed && isBrowser()
+  const stopReset = active
+    ? onReset(() => {
+        release = null
+      })
+    : noop
 
   const lock = () => {
-    if (!destroyed && !release && isBrowser()) release = lockScroll(options)
+    if (destroyed || release || !isBrowser()) return
+    release = acquireScrollLock(options)
+    if (destroyed) unlock()
   }
   const unlock = () => {
     release?.()
     release = null
   }
+  const destroy = () => {
+    if (destroyed) return
+    destroyed = true
+    signal?.removeEventListener('abort', destroy)
+    stopReset()
+    unlock()
+  }
+  if (active) signal?.addEventListener('abort', destroy)
 
   return {
     lock,
     unlock,
     toggle: (force?: boolean) => ((force ?? !release) ? lock() : unlock()),
     isLocked: () => release !== null,
-    destroy: () => {
-      unlock()
-      stopReset()
-      destroyed = true
-    },
+    destroy,
   }
 }

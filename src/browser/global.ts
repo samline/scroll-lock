@@ -1,6 +1,7 @@
 import {
   autoScrollLock,
   createScrollLock,
+  getScrollLockState,
   isScrollLocked,
   lockScroll,
   resetScrollLock,
@@ -26,6 +27,7 @@ const page = createScrollLock()
 const api = {
   lockScroll,
   createScrollLock,
+  getScrollLockState,
   isScrollLocked,
   resetScrollLock,
   scrollLock,
@@ -60,4 +62,12 @@ if (!manual && typeof document !== 'undefined') {
   }
 }
 
-export { autoScrollLock, createScrollLock, isScrollLocked, lockScroll, resetScrollLock, scrollLock }
+export {
+  autoScrollLock,
+  createScrollLock,
+  getScrollLockState,
+  isScrollLocked,
+  lockScroll,
+  resetScrollLock,
+  scrollLock,
+}

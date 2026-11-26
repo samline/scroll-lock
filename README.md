@@ -1,6 +1,6 @@
 # @samline/scroll-lock
 
-Lock the page scroll while a modal, drawer or menu is open: nested locks that release in any order, no layout shift when the scrollbar goes away, the scroll position back where it was, and the workaround iOS Safari needs. For vanilla JavaScript, any framework and plain HTML.
+Lock the page scroll while a modal, drawer or menu is open: nested locks that release in any order, no layout shift when the scrollbar goes away, the scroll position back where it was, and the workaround iOS Safari needs. For vanilla JavaScript and plain HTML.
 
 [Demo](https://samline.github.io/scroll-lock/) · [Examples](https://samline.github.io/scroll-lock/examples/) · [Documentation](https://samline.github.io/scroll-lock/docs/) · [Changelog](CHANGELOG.md)
 
@@ -66,13 +66,27 @@ const lock = createScrollLock()
 menuButton.addEventListener('click', () => lock.toggle())
 ```
 
+Tie a lock to a view's lifetime with `AbortController`:
+
+```js
+import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
+
+const lifetime = new AbortController()
+lockScroll({ signal: lifetime.signal })
+
+leaveViewButton.addEventListener('click', () => lifetime.abort(), { once: true })
+const { locked, count } = getScrollLockState()
+```
+
+Aborting releases that view's lock. Pass `signal` to `createScrollLock()` to destroy the controller on abort. Both functions are also available on `window.ScrollLock`.
+
 ## HTML / CDN
 
 For Shopify, WordPress or plain HTML pages without a build step, load the browser bundle. It watches every `[data-scroll-lock]` element as soon as the DOM is ready. Pin the version in production.
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.0.0/dist/browser/scroll-lock.global.js"
+  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.1.0/dist/browser/scroll-lock.global.js"
   defer
 ></script>
 ```
@@ -110,6 +124,7 @@ The page keeps its scroll position while locked and after, even with `scroll-beh
 | `scrollLock(target, options?)` | Lock while an element is open. Returns `{ refresh, isLocked, destroy }`.                          |
 | `autoScrollLock(options?)`     | Watch every `[data-scroll-lock]`, including elements added later. Returns `{ refresh, destroy }`. |
 | `isScrollLocked()`             | Whether any lock is held.                                                                         |
+| `getScrollLockState()`         | A snapshot with `{ locked, count }` for active page locks.                                        |
 | `resetScrollLock()`            | Release every lock, for example after a client-side navigation.                                   |
 | `mode`                         | `'auto'` (default), `'overflow'` or `'ios'`.                                                      |
 | `reserveGap`                   | Compensate the scrollbar width. Defaults to `true`.                                               |
@@ -134,7 +149,7 @@ Read the [documentation](https://samline.github.io/scroll-lock/docs/) for the fu
 | [Options](https://samline.github.io/scroll-lock/docs/reference/configuration/)    | Options, attributes, the state attribute and `--scroll-lock-gap`.     |
 | [How it works](https://samline.github.io/scroll-lock/docs/guides/strategies/)     | Nesting, the scrollbar gap, iOS Safari and `positionFixed`.           |
 | [Accessibility](https://samline.github.io/scroll-lock/docs/guides/accessibility/) | What a lock does and does not do for focus, inert content and motion. |
-| [Frameworks](https://samline.github.io/scroll-lock/docs/guides/frameworks/)       | React, Vue, Svelte, Astro and client-side routers.                    |
+| [Lock lifetimes](https://samline.github.io/scroll-lock/docs/guides/frameworks/)   | Vanilla navigation cleanup and animated close.                        |
 
 ## Changelog
 

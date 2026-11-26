@@ -11,7 +11,11 @@ sidebar:
 ## lockScroll(options?)
 
 ```ts
-lockScroll(options?: ScrollLockOptions): () => void
+lockScroll(options?: ScrollLockLifecycleOptions): () => void
+
+interface ScrollLockLifecycleOptions extends ScrollLockOptions {
+  signal?: AbortSignal
+}
 ```
 
 Locks the page and returns the release. See [Options](../configuration/).
@@ -25,10 +29,12 @@ drawer.addEventListener('close', unlock, { once: true })
 
 Locks nest: the page unlocks after the last release, in any order. Calling a release twice does nothing. Without a DOM it returns a no-op. It is also the default export of `@samline/scroll-lock/vanilla`.
 
+Pass `signal` to release this lock on abort. An already-aborted signal returns a no-op release. You can still release manually before the signal aborts.
+
 ## createScrollLock(options?)
 
 ```ts
-createScrollLock(options?: ScrollLockOptions): ScrollLock
+createScrollLock(options?: ScrollLockLifecycleOptions): ScrollLock
 
 interface ScrollLock {
   lock(): void
@@ -40,6 +46,8 @@ interface ScrollLock {
 ```
 
 A controller that holds at most one lock. `lock()` while locked and `unlock()` while unlocked do nothing, so a component can call them on every open and close without counting. `toggle(true)` locks, `toggle(false)` unlocks. `destroy()` releases the lock and ignores later `lock()` calls; it is idempotent.
+
+Pass `signal` to destroy the controller when the signal aborts, even if it is currently unlocked. An already-aborted signal creates an inert controller.
 
 ## scrollLock(target, options?)
 
@@ -87,6 +95,19 @@ isScrollLocked(): boolean
 
 `true` while any lock is held, by any function of the package.
 
+## getScrollLockState()
+
+```ts
+getScrollLockState(): ScrollLockState
+
+interface ScrollLockState {
+  readonly locked: boolean
+  readonly count: number
+}
+```
+
+Returns a fresh snapshot of all active page locks held by this package, including declarative watchers. Call again to read the new count after an acquisition or release. Without a DOM the snapshot is `{ locked: false, count: 0 }`.
+
 ## resetScrollLock()
 
 ```ts
@@ -119,7 +140,7 @@ The default `isOpen` of `scrollLock`, exported to build on: `isOpen: el => isOpe
 
 ## Types
 
-`ScrollLockOptions`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
+`ScrollLockOptions`, `ScrollLockLifecycleOptions`, `ScrollLockState`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
 
 ## window.ScrollLock
 
@@ -128,6 +149,7 @@ The browser bundle (`dist/browser/scroll-lock.global.js`) defines `window.Scroll
 | Member                                                                                                | Purpose                                                                         |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `lockScroll`, `createScrollLock`, `scrollLock`, `autoScrollLock`, `isScrollLocked`, `resetScrollLock` | The functions above.                                                            |
+| `getScrollLockState()`                                                                                | Snapshot of the active page locks.                                              |
 | `lock()`, `unlock()`                                                                                  | One shared lock for inline handlers. `lock()` twice still needs one `unlock()`. |
 | `auto(options?)`                                                                                      | Start (or restart) watching `[data-scroll-lock]`. Returns the controller.       |
 | `controller`                                                                                          | The controller of the automatic run, or `null`.                                 |

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import lockScrollDefault, {
   GAP_PROPERTY,
   createScrollLock,
+  getScrollLockState,
   isScrollLocked,
   lockScroll,
   resetScrollLock,
@@ -119,6 +120,68 @@ describe('lockScroll (overflow)', () => {
     release()
     expect(warn).toHaveBeenCalled()
     expect(html.hasAttribute('data-scroll-lock-state')).toBe(false)
+  })
+})
+
+describe('lock lifetime', () => {
+  it('aborts only its own lock and restores the position after the last release', () => {
+    const { scrollTo } = page({ y: 450 })
+    const lifetime = new AbortController()
+    const keep = lockScroll({ positionFixed: 'always' })
+    const release = lockScroll({ positionFixed: 'always', signal: lifetime.signal })
+    const snapshot = getScrollLockState()
+
+    lifetime.abort()
+    release()
+    expect(snapshot).toEqual({ locked: true, count: 2 })
+    expect(getScrollLockState()).toEqual({ locked: true, count: 1 })
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    keep()
+    expect(getScrollLockState()).toEqual({ locked: false, count: 0 })
+    expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ left: 0, top: 450, behavior: 'instant' })
+  })
+
+  it('never acquires a lock with an already-aborted signal', () => {
+    page()
+    const lifetime = new AbortController()
+    lifetime.abort()
+    lockScroll({ signal: lifetime.signal })()
+    const lock = createScrollLock({ signal: lifetime.signal })
+    lock.lock()
+    expect(lock.isLocked()).toBe(false)
+    expect(getScrollLockState()).toEqual({ locked: false, count: 0 })
+    expect(html.style.overflow).toBe('')
+  })
+
+  it('detaches the signal on manual release and reset', () => {
+    page()
+    const { signal } = new AbortController()
+    const remove = vi.spyOn(signal, 'removeEventListener')
+    const manual = lockScroll({ signal })
+    const reset = lockScroll({ signal })
+    manual()
+    resetScrollLock()
+    expect(remove.mock.calls).toEqual([
+      ['abort', manual],
+      ['abort', reset],
+    ])
+  })
+
+  it('destroys the controller on abort, including after a reset', () => {
+    page()
+    const lifetime = new AbortController()
+    const lock = createScrollLock({ signal: lifetime.signal })
+    lock.lock()
+    resetScrollLock()
+    expect(lock.isLocked()).toBe(false)
+    lock.lock()
+    expect(lock.isLocked()).toBe(true)
+
+    lifetime.abort()
+    lock.toggle(true)
+    expect(lock.isLocked()).toBe(false)
+    expect(getScrollLockState()).toEqual({ locked: false, count: 0 })
   })
 })
 

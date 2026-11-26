@@ -69,6 +69,68 @@ menu.addEventListener('click', event => {
   if (event.target.closest('a')) menu.hidePopover()
 })`
 
+const navigationScript = (api: string) => `const panel = document.querySelector('#project-tools')
+const section = document.querySelector('#view-title')
+const status = document.querySelector('#navigation-status')
+const opener = document.querySelector('#open-tools')
+let lifetime
+
+const report = () => {
+  const { locked, count } = ${api}getScrollLockState()
+  status.value = locked ? \`Page locked (\${count})\` : 'Page scrolls'
+}
+
+opener.addEventListener('click', () => {
+  if (lifetime) return
+  lifetime = new AbortController()
+  ${api}lockScroll({ signal: lifetime.signal })
+  panel.hidden = false
+  opener.setAttribute('aria-expanded', 'true')
+  report()
+})
+
+for (const button of document.querySelectorAll('[data-view]')) {
+  button.addEventListener('click', () => {
+    panel.hidden = true
+    lifetime?.abort()
+    lifetime = undefined
+    opener.setAttribute('aria-expanded', 'false')
+    section.textContent = button.dataset.view
+    report()
+  })
+}`
+
+const animatedScript = (api: string) => `const menu = document.querySelector('#animated-menu')
+const lock = ${api}createScrollLock()
+let exit
+
+document.querySelector('#open-animated').addEventListener('click', () => {
+  if (exit || menu.open) return
+  menu.showModal()
+  lock.lock()
+})
+
+const close = async () => {
+  if (exit || !menu.open) return
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    exit = menu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
+    await Promise.allSettled([exit.finished])
+  }
+  menu.close()
+  exit?.cancel()
+  exit = undefined
+  lock.unlock()
+}
+
+menu.addEventListener('cancel', event => {
+  event.preventDefault()
+  void close()
+})
+menu.querySelector('button').addEventListener('click', close)
+menu.addEventListener('close', () => {
+  if (!menu.open) lock.unlock()
+})`
+
 export default [
   {
     id: 'dialog',
@@ -174,6 +236,56 @@ ${menuScript}`,
 autoScrollLock()
 
 ${menuScript}`,
+    },
+  },
+  {
+    id: 'navigation',
+    tab: 'Navigation cleanup',
+    title: 'Release a lock when leaving a view',
+    description:
+      'Open the project tools, then switch views. The outgoing view aborts its scroll lock and the status shows how many locks remain on the page.',
+    files: {
+      html: `<nav class="view-controls" aria-label="Workspace views">
+  <button type="button" data-view="Overview">Overview</button>
+  <button type="button" data-view="Projects">Projects</button>
+  <button type="button" id="open-tools" aria-controls="project-tools" aria-expanded="false">Open project tools</button>
+  <output id="navigation-status" aria-live="polite">Page scrolls</output>
+</nav>
+<div class="workspace">
+  <h1 id="view-title">Overview</h1>
+  <aside id="project-tools" hidden aria-label="Project tools">Switch views to dismiss the project tools.</aside>
+  ${page}
+</div>`,
+      css: `${pageCss}
+.view-controls { position: fixed; inset: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; background: white; }
+.workspace { padding: 6rem 1.5rem 0; }`,
+      js: navigationScript('ScrollLock.'),
+      esm: `import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
+
+${navigationScript('')}`,
+    },
+  },
+  {
+    id: 'animated',
+    tab: 'Animated close',
+    title: 'Keep the page locked during an exit animation',
+    description:
+      'The menu keeps its lock until the fade finishes. Close it with the button or Escape. With reduced motion, it closes immediately.',
+    files: {
+      html: `<button type="button" id="open-animated" aria-haspopup="dialog">Open account menu</button>
+<dialog id="animated-menu" aria-labelledby="account-title">
+  <h1 id="account-title">Account menu</h1>
+  <button type="button" autofocus>Close account menu</button>
+</dialog>
+${page}`,
+      css: `${pageCss}
+#open-animated { position: fixed; inset: 1rem 1rem auto auto; }
+dialog { width: min(24rem, calc(100vw - 2rem)); box-sizing: border-box; }
+dialog::backdrop { background: rgb(0 0 0 / 0.4); }`,
+      js: animatedScript('ScrollLock.'),
+      esm: `import { createScrollLock } from '@samline/scroll-lock'
+
+${animatedScript('')}`,
     },
   },
 ]

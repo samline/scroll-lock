@@ -1,0 +1,71 @@
+---
+import './_shared.css'
+---
+
+<div class="scroll-lock-example">
+  <div class="controls" role="group" aria-label="Workspace views">
+    <button type="button" class="pill" data-view="Overview">
+      Overview
+    </button>
+    <button type="button" class="pill" data-view="Projects">
+      Projects
+    </button>
+    <button
+      type="button"
+      class="pill"
+      data-open-tools
+      aria-controls="scroll-lock-project-tools"
+      aria-expanded="false"
+    >
+      Open project tools
+    </button>
+  </div>
+  <p class="part-title" data-view-title>
+    Overview
+  </p>
+  <aside id="scroll-lock-project-tools" class="hint" hidden aria-label="Project tools">
+    Switch views to dismiss the project tools.
+  </aside>
+  <output aria-live="polite">Page scrolls</output>
+</div>
+
+<script>
+  import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+
+  preview('navigation', stage => {
+    const panel = stage.querySelector<HTMLElement>('#scroll-lock-project-tools')!
+    const title = stage.querySelector<HTMLElement>('[data-view-title]')!
+    const opener = stage.querySelector<HTMLButtonElement>('[data-open-tools]')!
+    const status = stage.querySelector('output')!
+    let lifetime: AbortController | undefined
+
+    const report = () => {
+      const { locked, count } = getScrollLockState()
+      status.value = locked ? `Page locked (${count})` : 'Page scrolls'
+    }
+
+    opener.addEventListener('click', () => {
+      if (lifetime) return
+      lifetime = new AbortController()
+      lockScroll({ signal: lifetime.signal })
+      panel.hidden = false
+      opener.setAttribute('aria-expanded', 'true')
+      report()
+    })
+
+    for (const button of stage.querySelectorAll<HTMLButtonElement>('[data-view]')) {
+      button.addEventListener('click', () => {
+        panel.hidden = true
+        lifetime?.abort()
+        lifetime = undefined
+        opener.setAttribute('aria-expanded', 'false')
+        title.textContent = button.dataset.view ?? ''
+        report()
+      })
+    }
+
+    report()
+    return () => lifetime?.abort()
+  })
+</script>
