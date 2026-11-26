@@ -12,12 +12,16 @@ All notable changes to this package. Format: [Keep a Changelog](https://keepacha
 
 ## [1.2.0] - 2026-11-25
 
+Tagged on GitHub but not published to npm; its changes reached npm with 1.3.0.
+
 ### Added
 
 - `allowScroll` and `data-scroll-lock-allow` restrict scroll gestures to selected regions while locking the page. Explicit policies follow the active layer and restore the previous layer on release.
 - A checkout example with two scrollable columns, an input and a separately mounted country picker.
 
 ## [1.1.0] - 2026-11-25
+
+Tagged on GitHub but not published to npm; its changes reached npm with 1.3.0.
 
 ### Added
 
