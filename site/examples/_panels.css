@@ -20,3 +20,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.scroll-lock-example details > .hint {
+  margin-block-start: 0.5rem;
+}
