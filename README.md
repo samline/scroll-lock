@@ -180,14 +180,14 @@ The page keeps its scroll position while locked and after, even with `scroll-beh
 
 Read the [documentation](https://samline.github.io/scroll-lock/docs/) for the full guides and API contracts, and explore [working examples](https://samline.github.io/scroll-lock/examples/) with complete and separate source files.
 
-| Guide                                                                             | What it covers                                                        |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [Installation](https://samline.github.io/scroll-lock/docs/getting-started/)       | npm, CDN and the first lock.                                          |
-| [API reference](https://samline.github.io/scroll-lock/docs/reference/api/)        | Every function, its types and `window.ScrollLock`.                    |
-| [Options](https://samline.github.io/scroll-lock/docs/reference/configuration/)    | Options, attributes, the state attribute and `--scroll-lock-gap`.     |
-| [How it works](https://samline.github.io/scroll-lock/docs/guides/strategies/)     | Nesting, the scrollbar gap, iOS Safari and `positionFixed`.           |
-| [Accessibility](https://samline.github.io/scroll-lock/docs/guides/accessibility/) | What a lock does and does not do for focus, inert content and motion. |
-| [Lock lifetimes](https://samline.github.io/scroll-lock/docs/guides/frameworks/)   | Vanilla navigation cleanup and animated close.                        |
+| Guide                                                                                          | What it covers                                                        |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [Installation](https://samline.github.io/scroll-lock/docs/getting-started/)                    | npm, CDN and the first lock.                                          |
+| [API reference](https://samline.github.io/scroll-lock/docs/reference/api/)                     | Every function, its types and `window.ScrollLock`.                    |
+| [Options](https://samline.github.io/scroll-lock/docs/reference/configuration/)                 | Options, attributes, the state attribute and `--scroll-lock-gap`.     |
+| [How it works](https://samline.github.io/scroll-lock/docs/guides/strategies/)                  | Nesting, the scrollbar gap, iOS Safari and `positionFixed`.           |
+| [Accessibility](https://samline.github.io/scroll-lock/docs/guides/accessibility/)              | What a lock does and does not do for focus, inert content and motion. |
+| [Frameworks and lock lifetimes](https://samline.github.io/scroll-lock/docs/guides/frameworks/) | Framework setup, navigation cleanup and animated close.               |
 
 ## Changelog
 

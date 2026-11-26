@@ -43,7 +43,16 @@ const sections = {
     descriptionContinuation: 'Install it, try the live preview, then read the full reference.',
     footnotes: ['Under 6 KB gzip', 'Zero dependencies', `${project.license} licensed`],
     compatibilityLabel: 'ONE SMALL SCRIPT. RIGHT AT HOME IN YOUR STACK.',
-    platforms: ['JavaScript', 'TypeScript', 'Shopify', 'WordPress'],
+    platforms: [
+      'JavaScript',
+      'TypeScript',
+      'React',
+      'Vue',
+      'Svelte',
+      'Astro',
+      'Shopify',
+      'WordPress',
+    ],
   },
   features: {
     eyebrow: '01 / More than overflow: hidden',
