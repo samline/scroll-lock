@@ -1,36 +1,46 @@
 ---
 // Home preview: a modal dialog that locks this page, with a second dialog
-// nested inside. The controls change the options of the next lock, and the
-// status line reads the page state from data-scroll-lock-state.
-const fixed = [
-  ['never', 'Never'],
-  ['always', 'Always'],
+// nested inside. A live readout shows what the lock changes (page state, locks
+// held, scroll position, scrollbar gap); the checkbox sets the next lock.
+const readout = [
+  ['page', 'Page', 'Scrolls'],
+  ['locks', 'Locks held', '0'],
+  ['scroll', 'Scroll position', '0 px'],
+  ['gap', 'Scrollbar gap', '0 px'],
 ]
 ---
 
 <scroll-lock-demo class="demo">
-  <div class="controls">
-    <fieldset>
-      <legend>Scrollbar gap</legend>
-      <label><input type="radio" name="scroll-lock-gap" value="true" checked /> Reserve</label>
-      <label><input type="radio" name="scroll-lock-gap" value="false" /> Ignore</label>
-    </fieldset>
-    <fieldset>
-      <legend>Pin body</legend>
-      {fixed.map(([value, label], i) => (
-        <label>
-          <input type="radio" name="scroll-lock-fixed" value={value} checked={i === 0} />
-          {label}
-        </label>
-      ))}
-    </fieldset>
+  <dl class="readout">
+    {readout.map(([key, label, initial]) => (
+      <div>
+        <dt>{label}</dt>
+        <dd>
+          <output data-out={key} data-readout aria-live={key === 'scroll' ? 'off' : 'polite'}>{initial}</output>
+          {key === 'scroll' && <span class="restored" data-restored></span>}
+        </dd>
+      </div>
+    ))}
+  </dl>
+  <div class="field">
+    <label><input type="checkbox" data-reserve checked aria-describedby="scroll-lock-demo-hint" /> Reserve the scrollbar gap</label>
+    <p class="hint" id="scroll-lock-demo-hint" data-hint>
+      Applies to the next lock. It keeps the page from shifting sideways when the scrollbar disappears.
+    </p>
   </div>
-  <button type="button" class="pill" data-open="first">Open a dialog</button>
-  <p class="status" aria-live="polite"><output>Page scrolls</output></p>
+  <div class="actions">
+    <button type="button" class="pill" data-open="first">Open a dialog</button>
+    <button type="button" class="pill" data-reset>Reset</button>
+  </div>
 
-  <dialog data-dialog="first" aria-labelledby="scroll-lock-demo-first">
+  <dialog data-dialog="first" closedby="any" aria-labelledby="scroll-lock-demo-first">
     <p class="title" id="scroll-lock-demo-first">The page behind is locked</p>
-    <div class="list" tabindex="0" aria-label="Scrollable content">
+    <p class="note">
+      Try scrolling the page behind this dialog: wheel, keys and touch are blocked. This list still
+      scrolls.
+    </p>
+    <p class="live" data-live aria-live="polite"></p>
+    <div class="list" tabindex="0" role="region" aria-label="Scrollable content">
       {Array.from({ length: 10 }, (_, i) => <p>Line {i + 1}: this list still scrolls.</p>)}
     </div>
     <div class="actions">
@@ -38,38 +48,92 @@ const fixed = [
       <button type="button" class="pill" data-close>Close</button>
     </div>
   </dialog>
-  <dialog data-dialog="second" aria-labelledby="scroll-lock-demo-second">
+  <dialog data-dialog="second" closedby="any" aria-labelledby="scroll-lock-demo-second">
     <p class="title" id="scroll-lock-demo-second">Two locks held</p>
     <p class="note">Close this one and the page stays locked until the first closes too.</p>
+    <p class="live" data-live aria-live="polite"></p>
     <div class="actions"><button type="button" class="pill" data-close>Close</button></div>
   </dialog>
 </scroll-lock-demo>
 
 <script>
-  import { lockScroll, type PositionFixed } from '@samline/scroll-lock'
+  import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
 
   for (const root of document.querySelectorAll<HTMLElement>('scroll-lock-demo')) {
-    const output = root.querySelector('output')!
     const html = document.documentElement
-    const picked = (name: string) =>
-      root.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!.value
+    const out = (key: string) => root.querySelector<HTMLOutputElement>(`[data-out="${key}"]`)!
+    const restored = root.querySelector<HTMLElement>('[data-restored]')!
+    const reserve = root.querySelector<HTMLInputElement>('[data-reserve]')!
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!
     // Each open dialog holds its own lock; closing one releases only that lock.
     const releases = new Map<HTMLDialogElement, () => void>()
+    let measured = 0
+    let heldAt = 0
+    let restoredTo: number | undefined
 
-    const report = () => {
-      const held = releases.size
-      const gap = html.style.getPropertyValue('--scroll-lock-gap') || '0px'
-      output.value = held
-        ? `Page locked by ${held} ${held === 1 ? 'dialog' : 'dialogs'}, scrollbar gap ${gap}`
-        : 'Page scrolls'
+    const px = (value: number) => `${Math.round(value)} px`
+    const render = () => {
+      const { locked, count } = getScrollLockState()
+      out('page').value = locked ? 'Locked' : 'Scrolls'
+      out('locks').value = String(count)
+      let gap = measured
+      if (locked) {
+        gap = parseFloat(html.style.getPropertyValue('--scroll-lock-gap')) || 0
+        out('gap').value = px(gap)
+      } else {
+        measured = window.innerWidth - html.clientWidth
+        out('gap').value = px(measured)
+      }
+      reserve.disabled = locked
+      // The modal covers the readout, so each dialog repeats it in one live line. While a
+      // dialog is open only that line announces; the readout stays silent to avoid doubles.
+      const line = `Page locked · ${count} ${count === 1 ? 'lock' : 'locks'} · scroll held at ${px(heldAt)} · gap ${px(gap)}`
+      for (const node of root.querySelectorAll<HTMLElement>('[data-live]')) node.textContent = line
+      for (const node of root.querySelectorAll<HTMLElement>('[data-readout]')) {
+        node.setAttribute('aria-live', locked || node.dataset.out === 'scroll' ? 'off' : 'polite')
+      }
+      hint.textContent =
+        (measured > 0
+          ? `Without it, the page shifts ${measured} px sideways when the scrollbar disappears.`
+          : 'Your browser uses overlay scrollbars, so nothing shifts here either way. On Windows or with a mouse it would.') +
+        ' Applies to the next lock.'
+    }
+    const showScroll = () => {
+      out('scroll').value = px(window.scrollY)
+      if (restoredTo !== undefined && Math.round(window.scrollY) !== restoredTo) {
+        restoredTo = undefined
+        restored.textContent = ''
+      }
+    }
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        showScroll()
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', render)
+
+    const release = (dialog: HTMLDialogElement, note = true) => {
+      const undo = releases.get(dialog)
+      if (!undo) return
+      releases.delete(dialog)
+      undo()
+      if (note && !getScrollLockState().locked) {
+        // Restoration is applied by the release; read the result a frame later.
+        requestAnimationFrame(() => {
+          restoredTo = Math.round(window.scrollY)
+          restored.textContent = `restored to ${px(restoredTo)}`
+          showScroll()
+        })
+      }
+      render()
     }
 
     for (const dialog of root.querySelectorAll<HTMLDialogElement>('dialog')) {
-      dialog.addEventListener('close', () => {
-        releases.get(dialog)?.()
-        releases.delete(dialog)
-        report()
-      })
+      dialog.addEventListener('close', () => release(dialog))
     }
 
     root.addEventListener('click', event => {
@@ -80,19 +144,32 @@ const fixed = [
           `[data-dialog="${open.dataset.open}"]`
         )!
         if (dialog.open) return
+        if (!getScrollLockState().locked) {
+          heldAt = Math.round(window.scrollY)
+          restoredTo = undefined
+          restored.textContent = ''
+        }
         // Open first: a dialog that fails to open must not leave a lock behind.
         dialog.showModal()
-        releases.set(
-          dialog,
-          lockScroll({
-            reserveGap: picked('scroll-lock-gap') === 'true',
-            positionFixed: picked('scroll-lock-fixed') as PositionFixed,
-          })
-        )
-        report()
+        releases.set(dialog, lockScroll({ reserveGap: reserve.checked }))
+        render()
+      }
+      if (target.closest('[data-reset]')) {
+        for (const dialog of releases.keys()) {
+          release(dialog, false)
+          dialog.close()
+        }
+        for (const dialog of root.querySelectorAll<HTMLDialogElement>('dialog')) dialog.close()
+        reserve.checked = true
+        restoredTo = undefined
+        restored.textContent = ''
+        render()
       }
       target.closest('[data-close]')?.closest('dialog')?.close()
     })
+
+    showScroll()
+    render()
   }
 </script>
 
@@ -101,28 +178,55 @@ const fixed = [
     display: grid;
     gap: 0.75rem;
     justify-items: start;
+    width: 100%;
   }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-  }
-  fieldset {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.75rem;
+  .readout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: var(--space-sm) var(--space-md);
+    width: 100%;
     margin: 0;
-    padding: 0;
-    border: 0;
+    padding: var(--space-sm) var(--space-md);
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+  .readout dt {
+    font: 0.65rem/1.6 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+  .readout dd {
+    margin: 0;
+    font: 0.8125rem/1.5 var(--font-mono);
+    color: var(--color-text);
+  }
+  .readout output {
+    color: var(--color-accent);
+  }
+  .live {
+    margin: 0.5rem 0 0;
+    font: 0.75rem/1.5 var(--font-mono);
+    color: var(--color-accent);
+  }
+  .restored {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-text-subtle);
+  }
+  .restored:empty {
+    display: none;
+  }
+  .field {
+    display: grid;
+    gap: 0.25rem;
     font-size: 0.8125rem;
     color: var(--color-text);
   }
-  legend {
-    float: left;
-    margin-right: 0.5rem;
-    font: 0.65rem/1.9 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .hint {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
     color: var(--color-text-subtle);
   }
   label {
@@ -142,11 +246,6 @@ const fixed = [
     font: inherit;
     font-size: 0.875rem;
     cursor: pointer;
-  }
-  .status {
-    margin: 0;
-    font: 0.75rem/1.6 var(--font-mono);
-    color: var(--color-text-subtle);
   }
   dialog {
     max-width: min(26rem, calc(100vw - 2rem));
@@ -188,7 +287,15 @@ const fixed = [
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
+  }
+  dialog .actions {
     margin-top: 0.75rem;
+  }
+  .pill:focus-visible,
+  input:focus-visible {
+    outline: 0.125rem solid var(--color-accent);
+    outline-offset: 0.125rem;
   }
 </style>

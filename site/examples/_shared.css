@@ -20,10 +20,21 @@
   font-size: 0.875rem;
   cursor: pointer;
 }
-.scroll-lock-example .pill[aria-expanded='true'] {
+.scroll-lock-example .pill[aria-expanded='true'],
+.scroll-lock-example .pill[aria-pressed='true'] {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-bg);
+}
+.scroll-lock-example .pill:focus-visible {
+  outline: 0.125rem solid var(--color-accent);
+  outline-offset: 0.125rem;
+}
+.scroll-lock-example .tag {
+  font: 0.65rem/1.6 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
 }
 .scroll-lock-example output,
 .scroll-lock-example .hint {

@@ -7,6 +7,7 @@ import './_shared.css'
     <button type="button" class="pill" data-open aria-haspopup="dialog">Read the terms</button>
     <output aria-live="polite">Page scrolls</output>
   </div>
+  <p class="hint">Open it and try to scroll this page: it stays still, while the list inside scrolls.</p>
   <dialog
     class="sheet"
     data-preview="dialog"
@@ -27,7 +28,7 @@ import './_shared.css'
     <div class="list" tabindex="0" role="region" aria-label="Clauses">
       {Array.from({ length: 12 }, (_, i) => <p>Clause {i + 1}. This list scrolls; the page behind it does not.</p>)}
     </div>
-    <p class="hint">Close with the button, Escape or a click outside.</p>
+    <p class="hint">Close it any way you like: the page scrolls again each time.</p>
     <form method="dialog" class="actions"><button class="pill">Accept</button></form>
   </dialog>
 </div>

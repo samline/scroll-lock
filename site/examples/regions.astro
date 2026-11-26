@@ -24,6 +24,9 @@ const countries = [
     </button>
     <output aria-live="polite">Page scrolls</output>
   </div>
+  <p class="hint">
+    Open Checkout and scroll the dashed lists, then open the country picker and compare.
+  </p>
   <aside
     id="scroll-lock-checkout"
     class="sheet checkout-panel"
@@ -40,18 +43,24 @@ const countries = [
       </button>
     </div>
     <div class="checkout-columns">
-      <div id="scroll-lock-order" class="list" tabindex="0" role="region" aria-label="Order">
-        {Array.from({ length: 12 }, (_, index) => (
-          <p>Order item {index + 1}</p>
-        ))}
+      <div class="region">
+        <span class="region-tag" aria-hidden="true">scrolls</span>
+        <div id="scroll-lock-order" class="list" tabindex="0" role="region" aria-label="Order">
+          {Array.from({ length: 12 }, (_, index) => (
+            <p>Order item {index + 1}</p>
+          ))}
+        </div>
       </div>
-      <div id="scroll-lock-delivery" class="list" tabindex="0" role="region" aria-label="Delivery">
-        {Array.from({ length: 10 }, (_, index) => (
-          <p>Delivery option {index + 1}</p>
-        ))}
-        <label class="hint">
-          Postal code <input autocomplete="postal-code" />
-        </label>
+      <div class="region">
+        <span class="region-tag" aria-hidden="true">scrolls</span>
+        <div id="scroll-lock-delivery" class="list" tabindex="0" role="region" aria-label="Delivery">
+          {Array.from({ length: 10 }, (_, index) => (
+            <p>Delivery option {index + 1}</p>
+          ))}
+          <label class="hint">
+            Postal code <input autocomplete="postal-code" />
+          </label>
+        </div>
       </div>
     </div>
     <button type="button" class="pill" data-open-countries>
@@ -73,18 +82,21 @@ const countries = [
         Close country picker
       </button>
     </div>
-    <div
-      id="scroll-lock-country-list"
-      class="list"
-      tabindex="0"
-      role="region"
-      aria-label="Countries"
-    >
-      <ul>
-        {countries.map(country => (
-          <li>{country}</li>
-        ))}
-      </ul>
+    <div class="region">
+      <span class="region-tag" aria-hidden="true">scrolls</span>
+      <div
+        id="scroll-lock-country-list"
+        class="list"
+        tabindex="0"
+        role="region"
+        aria-label="Countries"
+      >
+        <ul>
+          {countries.map(country => (
+            <li>{country}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   </aside>
 </div>
@@ -112,6 +124,23 @@ const countries = [
   .checkout-columns .list,
   .country-panel .list {
     max-height: min(9rem, 26dvh);
+  }
+  /* Allowed regions: dashed accent outline and a tag, against the locked page. */
+  .region {
+    position: relative;
+    padding-top: 1.25rem;
+  }
+  .region .list {
+    margin: 0;
+    border: 0.0625rem dashed var(--color-accent);
+  }
+  .region-tag {
+    position: absolute;
+    inset: 0 auto auto 0;
+    font: 0.65rem/1.25rem var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
   }
   .list li {
     padding-block: 0.3rem;

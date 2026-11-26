@@ -101,6 +101,7 @@ for (const button of document.querySelectorAll('[data-view]')) {
 }`
 
 const animatedScript = (api: string) => `const menu = document.querySelector('#animated-menu')
+const status = document.querySelector('#animated-status')
 const lock = ${api}createScrollLock()
 let exit
 
@@ -108,18 +109,21 @@ document.querySelector('#open-animated').addEventListener('click', () => {
   if (exit || menu.open) return
   menu.showModal()
   lock.lock()
+  status.value = 'Page locked'
 })
 
 const close = async () => {
   if (exit || !menu.open) return
   if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
-    exit = menu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
+    status.value = 'Locked while closing…'
+    exit = menu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' })
     await Promise.allSettled([exit.finished])
   }
   menu.close()
   exit?.cancel()
   exit = undefined
   lock.unlock()
+  status.value = 'Page scrolls'
 }
 
 menu.addEventListener('cancel', event => {
@@ -129,6 +133,7 @@ menu.addEventListener('cancel', event => {
 menu.querySelector('button').addEventListener('click', close)
 menu.addEventListener('close', () => {
   if (!menu.open) lock.unlock()
+  status.value = 'Page scrolls'
 })`
 
 const checkoutScript = `const panels = new Map()
@@ -150,8 +155,16 @@ document.querySelector('[data-open-countries]').addEventListener('click', () => 
 const panelCss = `.panel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .panel-scroll { box-sizing: border-box; max-block-size: 13rem; overflow: auto; overscroll-behavior: contain; border: 1px solid #ddd; padding: 0.75rem; }
 [data-scroll-lock-state='locked'].panel-scroll { border-color: #1d4ed8; }
+[aria-pressed='true'] { background: #1d4ed8; color: #fff; }
 .editor-controls { position: sticky; top: 0; background: white; display: flex; flex-wrap: wrap; gap: 0.5rem; padding-block: 0.75rem; }
 @media (width < 36rem) { .panel-grid { grid-template-columns: minmax(0, 1fr); } }`
+
+const inboxScript = `// The bundle watches the details element; the list reports its own state.
+const list = document.querySelector('#inbox-list')
+const status = document.querySelector('#inbox-status')
+new MutationObserver(() => {
+  status.value = list.getAttribute('data-scroll-lock-state') === 'locked' ? 'List frozen' : 'List scrolls'
+}).observe(list, { attributes: true, attributeFilter: ['data-scroll-lock-state'] })`
 
 const editorScript = (
   api: string
@@ -171,7 +184,7 @@ export default [
     tab: 'Modal dialog',
     title: 'Lock the page behind a modal dialog',
     description:
-      'data-scroll-lock on the dialog locks the page while it is open and releases it however it closes: the close button, the form, Escape or a click outside. The list inside still scrolls.',
+      'data-scroll-lock on a dialog locks the page while it is open and releases it however it closes: close button, form, Escape or a click outside.',
     files: {
       html: `<button type="button" id="open" aria-haspopup="dialog">Read the terms</button>
 <dialog id="terms" data-scroll-lock closedby="any" aria-labelledby="terms-title">
@@ -206,7 +219,7 @@ ${lightDismiss}`,
     tab: 'Nested locks',
     title: 'Open several panels, unlock in any order',
     description:
-      'Each side panel holds its own lock with createScrollLock. The page stays locked until the last one closes, whichever order you close them in (button or Escape), and returns to the same scroll position.',
+      'One createScrollLock per panel, so locks stack: the page unlocks only after the last release, in any order, and returns to the same scroll position.',
     files: {
       html: `<div class="toolbar">
   <button type="button" aria-expanded="false" aria-controls="cart">Cart</button>
@@ -246,7 +259,7 @@ ${nestedScript('')}`,
     tab: 'Popover menu',
     title: 'Lock while a popover menu is open',
     description:
-      'A popover with data-scroll-lock locks the page from the moment it opens until it closes: the close button, a chosen link, Escape or a click outside. The lock needs no script of your own.',
+      'A popover with data-scroll-lock needs no script for the lock: the watcher follows its open state, however it closes.',
     files: {
       html: `<button type="button" popovertarget="menu">Menu</button>
 <nav id="menu" popover data-scroll-lock aria-labelledby="menu-title">
@@ -277,7 +290,7 @@ ${menuScript}`,
     tab: 'Navigation cleanup',
     title: 'Release a lock when leaving a view',
     description:
-      'Open the project tools, then switch views. The outgoing view aborts its scroll lock and the status shows how many locks remain on the page.',
+      'lockScroll({ signal }) ties a lock to a view: aborting the signal when the view changes releases only that lock.',
     files: {
       html: `<nav class="view-controls" aria-label="Workspace views">
   <button type="button" data-view="Overview">Overview</button>
@@ -304,9 +317,10 @@ ${navigationScript('')}`,
     tab: 'Animated close',
     title: 'Keep the page locked during an exit animation',
     description:
-      'The menu keeps its lock until the fade finishes. Close it with the button or Escape. With reduced motion, it closes immediately.',
+      'createScrollLock lets the lock outlive the close request: it is released only after the exit animation settles, and at once with reduced motion.',
     files: {
       html: `<button type="button" id="open-animated" aria-haspopup="dialog">Open account menu</button>
+<output id="animated-status" aria-live="polite">Page scrolls</output>
 <dialog id="animated-menu" aria-labelledby="account-title">
   <h1 id="account-title">Account menu</h1>
   <button type="button" autofocus>Close account menu</button>
@@ -314,6 +328,7 @@ ${navigationScript('')}`,
 ${page}`,
       css: `${pageCss}
 #open-animated { position: fixed; inset: 1rem 1rem auto auto; }
+#animated-status { position: fixed; inset: 1rem auto auto 1rem; }
 dialog { width: min(24rem, calc(100vw - 2rem)); box-sizing: border-box; }
 dialog::backdrop { background: rgb(0 0 0 / 0.4); }`,
       js: animatedScript('ScrollLock.'),
@@ -327,7 +342,7 @@ ${animatedScript('')}`,
     tab: 'Allowed regions',
     title: 'Keep checkout lists scrollable while the page is locked',
     description:
-      'Scroll either checkout list, then open the country picker to give its list priority. Close the picker to restore both checkout lists. Close both panels to scroll the page again.',
+      'data-scroll-lock-allow lists the regions that keep scrolling in a locked page. The topmost panel\'s regions win, and closing it restores the previous ones.',
     files: {
       html: `<div class="checkout-controls" role="group" aria-label="Checkout panels">
   <button type="button" data-checkout-panel="checkout" aria-controls="checkout" aria-expanded="false">Checkout</button>
@@ -360,7 +375,8 @@ ${page}`,
 #checkout { width: min(31rem, calc(100vw - 2rem)); }
 #countries { inset: 4rem 1rem auto auto; width: min(14rem, calc(100vw - 2rem)); }
 .checkout-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
-.checkout-list { box-sizing: border-box; height: min(10rem, 30dvh); overflow: auto; overscroll-behavior: contain; border: 1px solid #ddd; padding: 0.5rem; }
+/* Dashed: the regions that keep scrolling while the page is locked. */
+.checkout-list { box-sizing: border-box; height: min(10rem, 30dvh); overflow: auto; overscroll-behavior: contain; border: 1px dashed #1d4ed8; padding: 0.5rem; }
 .checkout-list li { padding-block: 0.3rem; }
 [data-open-countries] { margin-top: 0.75rem; }
 input { box-sizing: border-box; max-width: 100%; }
@@ -379,13 +395,14 @@ ${checkoutScript}`,
     tab: 'Inbox panel',
     title: 'Freeze the inbox while you read a message',
     description:
-      'Open the reading controls to lock the message list. The message and page can still scroll. Close the controls to release the list.',
+      'data-scroll-lock-target locks one element instead of the page, so a list can be frozen while everything else keeps scrolling.',
     files: {
       html: `<div class="page">
   <details data-scroll-lock data-scroll-lock-target="#inbox-list">
     <summary>Freeze inbox list</summary>
     <p>The message stays scrollable while the inbox list is paused.</p>
   </details>
+  <output id="inbox-status" aria-live="polite">List scrolls</output>
   <div class="panel-grid">
     <div>
       <h2 id="inbox-title">Inbox</h2>
@@ -403,8 +420,8 @@ ${paragraphs(14, 'Conversation reply')}
 </div>
 ${page}`,
       css: `${pageCss}\n${panelCss}`,
-      js: '// The browser bundle watches the details element automatically.',
-      esm: `import { autoScrollLock } from '@samline/scroll-lock'\n\nautoScrollLock()`,
+      js: inboxScript,
+      esm: `import { autoScrollLock } from '@samline/scroll-lock'\n\nautoScrollLock()\n\n${inboxScript}`,
     },
   },
   {
@@ -412,7 +429,7 @@ ${page}`,
     tab: 'Independent panels',
     title: 'Lock either editor panel or the whole page',
     description:
-      'Scroll the Source and Preview panels, then toggle their locks independently. The page lock is a third scope. Unlock them in any order and each panel returns to its own position.',
+      'createScrollLock({ target }) gives each panel and the page its own lock, released in any order; each panel returns to its own scroll position.',
     files: {
       html: `<div class="page">
   <div class="editor-controls" role="group" aria-label="Editor locks">

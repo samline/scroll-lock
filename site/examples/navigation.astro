@@ -20,30 +20,25 @@ import './_shared.css'
       Open project tools
     </button>
   </div>
-  <p class="part-title" data-view-title>
-    Overview
-  </p>
+  <p class="part-title">Current view: <span data-view-title>Overview</span></p>
   <aside id="scroll-lock-project-tools" class="hint" hidden aria-label="Project tools">
-    Switch views to dismiss the project tools.
+The project tools hold a lock until you switch view.
   </aside>
   <output aria-live="polite">Page scrolls</output>
+  <p class="hint">Open the project tools, then switch view and watch the lock count drop.</p>
 </div>
 
 <script>
-  import { getScrollLockState, lockScroll } from '@samline/scroll-lock'
+  import { lockScroll } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
 
   preview('navigation', stage => {
     const panel = stage.querySelector<HTMLElement>('#scroll-lock-project-tools')!
     const title = stage.querySelector<HTMLElement>('[data-view-title]')!
     const opener = stage.querySelector<HTMLButtonElement>('[data-open-tools]')!
-    const status = stage.querySelector('output')!
+    const state = showPageState(stage.querySelector('output')!)
     let lifetime: AbortController | undefined
-
-    const report = () => {
-      const { locked, count } = getScrollLockState()
-      status.value = locked ? `Page locked (${count})` : 'Page scrolls'
-    }
 
     opener.addEventListener('click', () => {
       if (lifetime) return
@@ -51,7 +46,7 @@ import './_shared.css'
       lockScroll({ signal: lifetime.signal })
       panel.hidden = false
       opener.setAttribute('aria-expanded', 'true')
-      report()
+      state.update()
     })
 
     for (const button of stage.querySelectorAll<HTMLButtonElement>('[data-view]')) {
@@ -61,11 +56,10 @@ import './_shared.css'
         lifetime = undefined
         opener.setAttribute('aria-expanded', 'false')
         title.textContent = button.dataset.view ?? ''
-        report()
+        state.update()
       })
     }
 
-    report()
-    return () => lifetime?.abort()
+    return [() => lifetime?.abort(), state.destroy]
   })
 </script>

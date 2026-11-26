@@ -6,8 +6,11 @@ import './_panels.css'
 <div class="scroll-lock-example">
   <details data-inbox-controls data-scroll-lock-target="#scroll-lock-inbox-list">
     <summary>Freeze inbox list</summary>
-    <p class="hint">The message stays scrollable while the inbox list is paused.</p>
+    <p class="hint">
+      Scroll the Inbox, open this, then try again: only the inbox stays put.
+    </p>
   </details>
+  <output aria-live="polite" data-inbox-status>List scrolls</output>
   <div class="panel-grid">
     <div>
       <h3 class="part-title" id="scroll-lock-inbox-title">
@@ -47,5 +50,18 @@ import './_panels.css'
   import { scrollLock } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
 
-  preview('inbox', stage => scrollLock(stage.querySelector('[data-inbox-controls]')!))
+  preview('inbox', stage => {
+    const list = stage.querySelector<HTMLElement>('#scroll-lock-inbox-list')!
+    const status = stage.querySelector<HTMLOutputElement>('[data-inbox-status]')!
+    const controller = scrollLock(stage.querySelector('[data-inbox-controls]')!)
+    // The watcher marks the list itself: the status follows that attribute.
+    const show = () => {
+      status.value =
+        list.getAttribute('data-scroll-lock-state') === 'locked' ? 'List frozen' : 'List scrolls'
+    }
+    const observer = new MutationObserver(show)
+    observer.observe(list, { attributes: true, attributeFilter: ['data-scroll-lock-state'] })
+    show()
+    return [controller, () => observer.disconnect()]
+  })
 </script>

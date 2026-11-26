@@ -3,7 +3,7 @@ import './_shared.css'
 
 const panels = [
   { id: 'cart', name: 'Cart', side: 'end', text: 'Slides in from the right and holds its own lock.' },
-  { id: 'filters', name: 'Filters', side: 'start', text: 'Slides in from the left and holds another lock.' },
+  { id: 'filters', name: 'Filters', side: 'start', text: 'Slides in from the left and holds a second lock.' },
 ]
 ---
 
@@ -21,6 +21,10 @@ const panels = [
     ))}
     <output aria-live="polite">Page scrolls</output>
   </div>
+  <p class="hint">
+    Open both panels (the count goes to 2), then close one: the page stays locked. Escape closes
+    the newest.
+  </p>
   {panels.map(panel => (
     <aside
       class="side-panel"
@@ -40,7 +44,6 @@ const panels = [
         </button>
       </div>
       <p class="hint">{panel.text}</p>
-      <p class="hint">Close the panels in any order: the page unlocks after the last one.</p>
     </aside>
   ))}
 </div>
@@ -73,9 +76,9 @@ const panels = [
         return { lock, close }
       }
     )
-    const state = showPageState(stage.querySelector('output')!, () =>
-      open.length ? `${open.length} ${open.length === 1 ? 'panel' : 'panels'} open` : ''
-    )
+    const state = showPageState(stage.querySelector('output')!, {
+      detail: () => `${open.length} ${open.length === 1 ? 'panel' : 'panels'} open`,
+    })
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && open.length) open.at(-1)!()
     }

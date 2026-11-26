@@ -9,6 +9,10 @@ import './_shared.css'
     </button>
     <output aria-live="polite">Page scrolls</output>
   </div>
+  <p class="hint">
+    Close the menu and watch the status read "Locked while closing…" before the page scrolls
+    again.
+  </p>
   <dialog class="sheet" aria-labelledby="scroll-lock-account-title">
     <h3 class="part-title" id="scroll-lock-account-title">
       Account menu
@@ -29,8 +33,10 @@ import './_shared.css'
   preview('animated', stage => {
     const menu = stage.querySelector('dialog')!
     const lock = createScrollLock()
-    const state = showPageState(stage.querySelector('output')!)
     let exit: Animation | undefined
+    const state = showPageState(stage.querySelector('output')!, {
+      override: () => (exit ? 'Locked while closing…' : undefined),
+    })
 
     stage.querySelector('[data-open-animated]')!.addEventListener('click', () => {
       if (exit || menu.open) return
@@ -41,13 +47,15 @@ import './_shared.css'
     const close = async () => {
       if (exit || !menu.open) return
       if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
-        exit = menu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
+        exit = menu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' })
+        state.update()
         await Promise.allSettled([exit.finished])
       }
       menu.close()
       exit?.cancel()
       exit = undefined
       lock.unlock()
+      state.update()
     }
 
     menu.addEventListener('cancel', event => {

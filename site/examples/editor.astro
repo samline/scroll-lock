@@ -24,13 +24,19 @@ const panels = [
     <button type="button" class="pill" data-editor-lock aria-pressed="false">
       Lock page
     </button>
+    <output aria-live="polite" data-page-status>Page scrolls</output>
   </div>
+  <p class="hint">
+    Lock Source, then scroll Preview and the page: only Source stays put. A filled button marks a
+    held lock.
+  </p>
   <div class="panel-grid">
     {panels.map(panel => (
       <div>
-        <h3 class="part-title" id={`scroll-lock-editor-${panel.id}-title`}>
-          {panel.label}
-        </h3>
+        <div class="sheet-header">
+          <h3 class="part-title" id={`scroll-lock-editor-${panel.id}-title`}>{panel.label}</h3>
+          <output class="tag" aria-live="polite" data-panel-status={panel.id}>scrolls</output>
+        </div>
         <div
           id={`scroll-lock-editor-${panel.id}`}
           class="list panel-scroll"
@@ -52,17 +58,28 @@ const panels = [
 <script>
   import { createScrollLock, isScrollLocked } from '@samline/scroll-lock'
   import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
 
-  preview('editor', stage =>
-    Array.from(stage.querySelectorAll<HTMLButtonElement>('[data-editor-lock]'), button => {
-      const id = button.getAttribute('aria-controls')
-      const target = id ? stage.querySelector<HTMLElement>(`#${id}`)! : undefined
-      const lock = createScrollLock(target ? { target } : {})
-      button.addEventListener('click', () => {
-        lock.toggle()
-        button.setAttribute('aria-pressed', String(isScrollLocked(target)))
-      })
-      return lock
-    })
-  )
+  preview('editor', stage => {
+    const state = showPageState(stage.querySelector('[data-page-status]')!)
+    const locks = Array.from(
+      stage.querySelectorAll<HTMLButtonElement>('[data-editor-lock]'),
+      button => {
+        const id = button.getAttribute('aria-controls')
+        const target = id ? stage.querySelector<HTMLElement>(`#${id}`)! : undefined
+        const lock = createScrollLock(target ? { target } : {})
+        button.addEventListener('click', () => {
+          lock.toggle()
+          const held = isScrollLocked(target)
+          button.setAttribute('aria-pressed', String(held))
+          // Every panel keeps its own text status next to the filled button.
+          const status = id && stage.querySelector<HTMLOutputElement>(`[data-panel-status="${id.replace('scroll-lock-editor-', '')}"]`)
+          if (status) status.value = held ? 'locked' : 'scrolls'
+          state.update()
+        })
+        return lock
+      }
+    )
+    return [...locks, state.destroy]
+  })
 </script>
