@@ -69,9 +69,8 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: 1.4.4
+      # No Bun here: setup-bun needs unzip, which the image lacks, and these two
+      # scripts (tsup, playwright test) run the same through pnpm.
       - run: pnpm install --frozen-lockfile
-      - run: bun run build
-      - run: bun run test:e2e
+      - run: pnpm run build
+      - run: pnpm run test:e2e
