@@ -80,13 +80,13 @@
   "sources": [
     {
       "source": "README.md",
-      "sha256": "0d50d03011e115342952338ddeab33adb6253852236e0e240664a0089cc3b0ef",
+      "sha256": "f11d34be21bdaa97696988c181a49be1d99fb4d065d9042188be3c0980448abb",
       "destination": "docs/src/content/docs/index.mdx",
       "reviewed": true
     },
     {
       "source": "README.md",
-      "sha256": "0d50d03011e115342952338ddeab33adb6253852236e0e240664a0089cc3b0ef",
+      "sha256": "f11d34be21bdaa97696988c181a49be1d99fb4d065d9042188be3c0980448abb",
       "destination": "docs/src/content/docs/getting-started.mdx",
       "reviewed": true
     },

@@ -38,3 +38,8 @@ All notable changes to this package. Format: [Keep a Changelog](https://keepacha
 - `data-scroll-lock-state` on `<html>` (`locked`) and on watched elements (`locked` or `unlocked`), and the `--scroll-lock-gap` custom property.
 - The Mobile Safari workaround and the `position: fixed` body pin, adapted from vaul (MIT) and React Spectrum (Apache-2.0); their notices are in `LICENSE.md`.
 - `window.ScrollLock` browser global with `lock()`, `unlock()`, `auto()` and `data-manual`.
+
+[1.3.0]: https://github.com/samline/scroll-lock/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/samline/scroll-lock/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/samline/scroll-lock/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/samline/scroll-lock/releases/tag/v1.0.0

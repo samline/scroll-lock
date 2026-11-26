@@ -148,20 +148,25 @@ The page keeps its scroll position while locked and after, even with `scroll-beh
 
 ## API at a glance
 
-| API                            | Purpose                                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `lockScroll(options?)`         | Lock the page. Returns the release, safe to call twice.                                           |
-| `createScrollLock(options?)`   | One lock for a component: `{ lock, unlock, toggle, isLocked, destroy }`.                          |
-| `scrollLock(target, options?)` | Lock while an element is open. Returns `{ refresh, isLocked, destroy }`.                          |
-| `autoScrollLock(options?)`     | Watch every `[data-scroll-lock]`, including elements added later. Returns `{ refresh, destroy }`. |
-| `isScrollLocked(target?)`      | Whether the page or specified panel holds any locks.                                              |
-| `getScrollLockState(target?)`  | A `{ locked, count }` snapshot for the page or specified panel.                                   |
-| `resetScrollLock(target?)`     | Release the specified panel’s locks, or every lock when omitted.                                  |
-| `mode`                         | `'auto'` (default), `'overflow'` or `'ios'`.                                                      |
-| `reserveGap`                   | Compensate the scrollbar width. Defaults to `true`.                                               |
-| `positionFixed`                | Pin `<body>`: `'never'` (default), `'safari'` or `'always'`.                                      |
-| `allowScroll`                  | Scroll regions for this lock, as elements, selectors or an array.                                 |
-| `target`                       | Lock one scroll container by element or CSS selector.                                             |
+| API                            | Purpose                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `lockScroll(options?)`         | Lock the page. Returns the release, safe to call twice.                                                |
+| `createScrollLock(options?)`   | One lock for a component: `{ lock, unlock, toggle, isLocked, destroy }`.                               |
+| `scrollLock(target, options?)` | Lock while an element is open. Returns `{ refresh, isLocked, destroy }`.                               |
+| `autoScrollLock(options?)`     | Watch every `[data-scroll-lock]`, including elements added later. Returns `{ refresh, destroy }`.      |
+| `isScrollLocked(target?)`      | Whether the page or specified panel holds any locks.                                                   |
+| `getScrollLockState(target?)`  | A `{ locked, count }` snapshot for the page or specified panel.                                        |
+| `resetScrollLock(target?)`     | Release the specified panel’s locks, or every lock when omitted.                                       |
+| `isOpenElement(element)`       | The default `isOpen` of `scrollLock`, exported to build on.                                            |
+| `mode`                         | `'auto'` (default), `'overflow'` or `'ios'`.                                                           |
+| `reserveGap`                   | Compensate the scrollbar width. Defaults to `true`.                                                    |
+| `positionFixed`                | Pin `<body>`: `'never'` (default), `'safari'` or `'always'`.                                           |
+| `allowScroll`                  | Scroll regions for this lock, as elements, selectors or an array.                                      |
+| `target`                       | Lock one scroll container by element or CSS selector.                                                  |
+| `signal`                       | An `AbortSignal` for `lockScroll` (releases its lock) or `createScrollLock` (destroys the controller). |
+| `isOpen`                       | `scrollLock` and `autoScrollLock`: whether an element counts as open. Defaults to `isOpenElement`.     |
+| `root`                         | `autoScrollLock`: where to look for `[data-scroll-lock]`. Defaults to `document`.                      |
+| `observe`                      | `autoScrollLock`: also watch elements added later. Defaults to `true`.                                 |
 
 ### Entrypoints
 
