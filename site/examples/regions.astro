@@ -1,0 +1,165 @@
+---
+import './_shared.css'
+
+const countries = [
+  'Brazil',
+  'Canada',
+  'France',
+  'Germany',
+  'Japan',
+  'Mexico',
+  'Spain',
+  'United Kingdom',
+  'United States',
+]
+---
+
+<div class="scroll-lock-example">
+  <div class="controls" role="group" aria-label="Checkout panels">
+    <button type="button" class="pill" aria-controls="scroll-lock-checkout" aria-expanded="false">
+      Checkout
+    </button>
+    <button type="button" class="pill" aria-controls="scroll-lock-countries" aria-expanded="false">
+      Country picker
+    </button>
+    <output aria-live="polite">Page scrolls</output>
+  </div>
+  <aside
+    id="scroll-lock-checkout"
+    class="sheet checkout-panel"
+    popover="manual"
+    data-scroll-lock-allow="#scroll-lock-order, #scroll-lock-delivery"
+    aria-labelledby="scroll-lock-checkout-title"
+  >
+    <div class="sheet-header">
+      <h3 class="part-title" id="scroll-lock-checkout-title">
+        Checkout
+      </h3>
+      <button type="button" class="pill" data-close-panel>
+        Close checkout
+      </button>
+    </div>
+    <div class="checkout-columns">
+      <div id="scroll-lock-order" class="list" tabindex="0" role="region" aria-label="Order">
+        {Array.from({ length: 12 }, (_, index) => (
+          <p>Order item {index + 1}</p>
+        ))}
+      </div>
+      <div id="scroll-lock-delivery" class="list" tabindex="0" role="region" aria-label="Delivery">
+        {Array.from({ length: 10 }, (_, index) => (
+          <p>Delivery option {index + 1}</p>
+        ))}
+        <label class="hint">
+          Postal code <input autocomplete="postal-code" />
+        </label>
+      </div>
+    </div>
+    <button type="button" class="pill" data-open-countries>
+      Open country picker
+    </button>
+  </aside>
+  <aside
+    id="scroll-lock-countries"
+    class="sheet country-panel"
+    popover="manual"
+    data-scroll-lock-allow="#scroll-lock-country-list"
+    aria-labelledby="scroll-lock-countries-title"
+  >
+    <div class="sheet-header">
+      <h3 class="part-title" id="scroll-lock-countries-title">
+        Country picker
+      </h3>
+      <button type="button" class="pill" data-close-panel>
+        Close country picker
+      </button>
+    </div>
+    <div
+      id="scroll-lock-country-list"
+      class="list"
+      tabindex="0"
+      role="region"
+      aria-label="Countries"
+    >
+      <ul>
+        {countries.map(country => (
+          <li>{country}</li>
+        ))}
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<style>
+  .sheet.checkout-panel,
+  .sheet.country-panel {
+    position: fixed;
+    margin: 0;
+    inset-block: 3.75rem auto;
+  }
+  .sheet.checkout-panel {
+    inset-inline: 1rem auto;
+    width: min(30rem, calc(100vw - 2rem));
+  }
+  .sheet.country-panel {
+    inset-inline: auto 1rem;
+    width: min(18rem, calc(100vw - 2rem));
+  }
+  .checkout-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .checkout-columns .list,
+  .country-panel .list {
+    max-height: min(9rem, 26dvh);
+  }
+  .list li {
+    padding-block: 0.3rem;
+  }
+  input {
+    width: 100%;
+    max-width: 100%;
+  }
+  @media (width < 45rem) {
+    .sheet.country-panel {
+      inset-block: auto 1rem;
+    }
+  }
+</style>
+
+<script>
+  import { scrollLock } from '@samline/scroll-lock'
+  import { preview } from '../../shared/lib/preview'
+  import { showPageState } from './_page-state'
+
+  preview('regions', stage => {
+    const state = showPageState(stage.querySelector('output')!)
+    const panels = Array.from(
+      stage.querySelectorAll<HTMLButtonElement>('[aria-controls]'),
+      button => {
+        const panel = stage.querySelector<HTMLElement>(`#${button.getAttribute('aria-controls')}`)!
+        const lock = scrollLock(panel)
+        const set = (open: boolean) => {
+          panel.togglePopover(open)
+          button.setAttribute('aria-expanded', String(open))
+          lock.refresh()
+        }
+        button.addEventListener('click', () => set(!panel.matches(':popover-open')))
+        panel.querySelector('[data-close-panel]')!.addEventListener('click', () => {
+          set(false)
+          button.focus({ preventScroll: true })
+        })
+        const destroy = () => {
+          panel.hidePopover()
+          lock.destroy()
+        }
+        return { panel, set, destroy }
+      }
+    )
+    const [checkout, countries] = panels
+    checkout!.panel.querySelector('[data-open-countries]')!.addEventListener('click', () => {
+      countries!.set(true)
+    })
+    return [...panels.map(panel => panel.destroy), state.destroy]
+  })
+</script>

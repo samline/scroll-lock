@@ -86,7 +86,7 @@ For Shopify, WordPress or plain HTML pages without a build step, load the browse
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.1.0/dist/browser/scroll-lock.global.js"
+  src="https://cdn.jsdelivr.net/npm/@samline/scroll-lock@1.2.0/dist/browser/scroll-lock.global.js"
   defer
 ></script>
 ```
@@ -98,6 +98,23 @@ The bundle defines `window.ScrollLock`. `ScrollLock.lock()` and `ScrollLock.unlo
 ### Nested locks
 
 A drawer opens a dialog that opens a menu: each takes its own lock, and the page unlocks only when the last one is released, in any order. Releasing twice does nothing, and `createScrollLock()` gives each component one lock it cannot release twice.
+
+### Allowed scroll regions
+
+Keep selected lists or panels scrollable while the page is locked. Pass an element, a CSS selector or an array of both to `allowScroll`, or set `data-scroll-lock-allow` on a watched element:
+
+```html
+<dialog data-scroll-lock data-scroll-lock-allow="#checkout-items, #delivery-options">
+  <div id="checkout-items" class="scroll-region" tabindex="0" role="region" aria-label="Order">
+    …
+  </div>
+  <div id="delivery-options" class="scroll-region" tabindex="0" role="region" aria-label="Delivery">
+    …
+  </div>
+</dialog>
+```
+
+Give each region a bounded size and `overflow: auto`. The latest active lock that specifies regions controls wheel, touch and scrolling keys. Closing it restores the prior policy. See [Options](https://samline.github.io/scroll-lock/docs/reference/configuration/#allowed-scroll-regions) for boundary behavior and an empty allowlist.
 
 ### No layout shift
 
@@ -129,6 +146,7 @@ The page keeps its scroll position while locked and after, even with `scroll-beh
 | `mode`                         | `'auto'` (default), `'overflow'` or `'ios'`.                                                      |
 | `reserveGap`                   | Compensate the scrollbar width. Defaults to `true`.                                               |
 | `positionFixed`                | Pin `<body>`: `'never'` (default), `'safari'` or `'always'`.                                      |
+| `allowScroll`                  | Scroll regions for this lock, as elements, selectors or an array.                                 |
 
 ### Entrypoints
 

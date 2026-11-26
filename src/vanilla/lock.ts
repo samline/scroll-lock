@@ -7,12 +7,14 @@ import {
   resolveOptions,
   usesPositionFixed,
 } from '../core/scroll-lock.js'
-import type { PlatformInfo, ScrollLockOptions } from '../core/scroll-lock.js'
+import type { PlatformInfo } from '../core/scroll-lock.js'
 import { chain, pinBody, preventScrollMobileSafari, setStyle } from './ios.js'
+import { registerScrollRegions } from './regions.js'
+import type { ScrollLockRegionOptions } from './regions.js'
 
 type Cleanup = () => void
 
-export interface ScrollLockLifecycleOptions extends ScrollLockOptions {
+export interface ScrollLockLifecycleOptions extends ScrollLockRegionOptions {
   /** Abort to release an individual lock or destroy its controller. */
   signal?: AbortSignal
 }
@@ -91,7 +93,7 @@ const lockIOS = (reserveGap: boolean): Cleanup => {
   )
 }
 
-const acquireScrollLock = (options: ScrollLockOptions, signal?: AbortSignal): Cleanup => {
+const acquireScrollLock = (options: ScrollLockRegionOptions, signal?: AbortSignal): Cleanup => {
   const { mode, reserveGap, positionFixed } = resolveOptions(options)
   const info = platform()
 
@@ -103,12 +105,14 @@ const acquireScrollLock = (options: ScrollLockOptions, signal?: AbortSignal): Cl
     resolveMode(mode, info) === 'ios'
       ? acquire(ios, () => lockIOS(reserveGap))
       : acquire(overflow, () => lockOverflow(reserveGap))
+  const regions = options.allowScroll
+  const forgetRegions = regions === undefined ? null : registerScrollRegions(() => regions)
 
   // Release in reverse: the iOS workaround scrolls back before the unpin.
   const release = (): void => {
     if (!holders.delete(release)) return
     signal?.removeEventListener('abort', release)
-    chain(locked, pinned, marked)()
+    chain(forgetRegions, locked, pinned, marked)()
   }
   holders.add(release)
   if (signal?.aborted) release()

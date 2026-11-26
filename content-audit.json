@@ -1,6 +1,6 @@
 {
   "status": "verified",
-  "packageVersion": "1.1.0",
+  "packageVersion": "1.2.0",
   "capabilityReview": {
     "status": "verified",
     "integrations": [
@@ -47,6 +47,12 @@
         "evidence": "site/examples.ts, tests/e2e/examples.spec.ts",
         "destination": "site/examples/animated.astro",
         "reviewed": true
+      },
+      {
+        "name": "Allowed regions in a checkout with a separate country picker",
+        "evidence": "site/examples.ts, test/regions.test.ts, tests/e2e/examples.spec.ts",
+        "destination": "site/examples/regions.astro",
+        "reviewed": true
       }
     ],
     "onboarding": {
@@ -62,13 +68,13 @@
   "sources": [
     {
       "source": "README.md",
-      "sha256": "5546cbb30bafa8186f875be47fe18e01848a63fab2f1f253c879a46bd204f5d7",
+      "sha256": "ad01a40291f25c623024f065c700e58d34cb5c528d1253f5e57fd4c032bd7b0c",
       "destination": "docs/src/content/docs/index.mdx",
       "reviewed": true
     },
     {
       "source": "README.md",
-      "sha256": "5546cbb30bafa8186f875be47fe18e01848a63fab2f1f253c879a46bd204f5d7",
+      "sha256": "ad01a40291f25c623024f065c700e58d34cb5c528d1253f5e57fd4c032bd7b0c",
       "destination": "docs/src/content/docs/getting-started.mdx",
       "reviewed": true
     },
@@ -86,7 +92,7 @@
     },
     {
       "source": "src/vanilla/index.ts",
-      "sha256": "d7ec161ef51b75f11c24b9f9c2aca7b9c7c8871ff6cf80ae65a055a104dc45be",
+      "sha256": "715393d01e3b4ded9c1111910f8e7dfe4e742ffd8d7aecf08bae25e1ac7e0f50",
       "destination": "docs/src/content/docs/reference/api.md",
       "reviewed": true
     },
@@ -98,13 +104,13 @@
     },
     {
       "source": "src/vanilla/lock.ts",
-      "sha256": "af859a9bedc5774c0a9001d1eb213c7e202e9114485870d52ebf4b4686557d0b",
+      "sha256": "624365a48daba09bbee57a91332271a454457f66e2cfdb269a3c089ec698d455",
       "destination": "docs/src/content/docs/reference/api.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/watch.ts",
-      "sha256": "2b14d616d908b3eb1b51cf566915a7a37ca4471ffbbd41a03c1900426fa6d1ac",
+      "sha256": "a4abf9f246e95df00e320c768f50ed758c037d06531bd75a5e613a8a17b2d2ea",
       "destination": "docs/src/content/docs/reference/api.md",
       "reviewed": true
     },
@@ -116,34 +122,40 @@
     },
     {
       "source": "src/vanilla/watch.ts",
-      "sha256": "2b14d616d908b3eb1b51cf566915a7a37ca4471ffbbd41a03c1900426fa6d1ac",
+      "sha256": "a4abf9f246e95df00e320c768f50ed758c037d06531bd75a5e613a8a17b2d2ea",
       "destination": "docs/src/content/docs/reference/configuration.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/lock.ts",
-      "sha256": "af859a9bedc5774c0a9001d1eb213c7e202e9114485870d52ebf4b4686557d0b",
+      "sha256": "624365a48daba09bbee57a91332271a454457f66e2cfdb269a3c089ec698d455",
       "destination": "docs/src/content/docs/guides/strategies.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/ios.ts",
-      "sha256": "e028bf5d25afef6474d9d706fdd1058c7f0b8dcba07ba881c053b6ad63ca9d76",
+      "sha256": "a76954c4b33f71c57445e17fa4cbadaed35a031b34c9a9c6b7ee4228e3c68de7",
       "destination": "docs/src/content/docs/guides/strategies.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/lock.ts",
-      "sha256": "af859a9bedc5774c0a9001d1eb213c7e202e9114485870d52ebf4b4686557d0b",
+      "sha256": "624365a48daba09bbee57a91332271a454457f66e2cfdb269a3c089ec698d455",
       "destination": "docs/src/content/docs/guides/accessibility.md",
       "reviewed": true
     },
     {
       "source": "src/vanilla/lock.ts",
-      "sha256": "af859a9bedc5774c0a9001d1eb213c7e202e9114485870d52ebf4b4686557d0b",
+      "sha256": "624365a48daba09bbee57a91332271a454457f66e2cfdb269a3c089ec698d455",
       "destination": "docs/src/content/docs/guides/frameworks.md",
       "reviewed": true
+    },
+    {
+      "source": "src/vanilla/regions.ts",
+      "destination": "docs/src/content/docs/reference/configuration.md",
+      "reviewed": true,
+      "sha256": "f7f53c552413b9d045447b4ca70e2438864926af2154b9d18435374b8343017e"
     }
   ],
-  "notes": "Reviewed against the package sources for 1.1.0, including lock lifetimes and the page lock count."
+  "notes": "Reviewed against the package sources for 1.2.0, including allowed regions and layer priority."
 }

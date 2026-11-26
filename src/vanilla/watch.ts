@@ -10,8 +10,10 @@ import {
 } from '../core/scroll-lock.js'
 import type { ScrollLockOptions } from '../core/scroll-lock.js'
 import { createScrollLock, onReset } from './lock.js'
+import { refreshScrollRegions, registerScrollRegions } from './regions.js'
+import type { ScrollLockRegionOptions } from './regions.js'
 
-export interface ScrollLockWatchOptions extends ScrollLockOptions {
+export interface ScrollLockWatchOptions extends ScrollLockRegionOptions {
   /**
    * Whether the element counts as open. By default: the `open` attribute on
    * `<dialog>` and `<details>`, `:popover-open` on popovers, and for any other
@@ -37,6 +39,7 @@ export interface ScrollLockController {
 }
 
 /** Attributes whose changes can open or close an element. */
+const ALLOW = `${ATTRIBUTE}-allow`
 const WATCHED = [
   'open',
   'hidden',
@@ -47,6 +50,7 @@ const WATCHED = [
   `${ATTRIBUTE}-mode`,
   `${ATTRIBUTE}-gap`,
   `${ATTRIBUTE}-position-fixed`,
+  ALLOW,
 ]
 
 const isPopoverOpen = (element: Element): boolean => {
@@ -90,6 +94,12 @@ const watchOne = (
   let current = readOptions(element, options)
   let applied = JSON.stringify(current)
   let lock = createScrollLock(current)
+  let forgetRegions: (() => void) | undefined
+
+  const clearRegions = () => {
+    forgetRegions?.()
+    forgetRegions = undefined
+  }
 
   const refresh = () => {
     // `data-scroll-lock="false"` turns the element off without removing it.
@@ -106,6 +116,12 @@ const watchOne = (
       old.destroy()
     }
     lock.toggle(wanted)
+    if (!lock.isLocked()) clearRegions()
+    else if (forgetRegions) refreshScrollRegions()
+    else
+      forgetRegions = registerScrollRegions(
+        () => element.getAttribute(ALLOW) ?? options.allowScroll
+      )
     element.setAttribute(STATE_ATTRIBUTE, lock.isLocked() ? 'locked' : 'unlocked')
   }
 
@@ -115,7 +131,10 @@ const watchOne = (
   element.addEventListener('toggle', refresh)
 
   // resetScrollLock() released the lock behind this element's back.
-  const stopReset = onReset(() => element.setAttribute(STATE_ATTRIBUTE, 'unlocked'))
+  const stopReset = onReset(() => {
+    clearRegions()
+    element.setAttribute(STATE_ATTRIBUTE, 'unlocked')
+  })
 
   refresh()
 
@@ -131,6 +150,7 @@ const watchOne = (
       observer.disconnect()
       element.removeEventListener('toggle', refresh)
       stopReset()
+      clearRegions()
       lock.destroy()
       if (previous === null) element.removeAttribute(STATE_ATTRIBUTE)
       else element.setAttribute(STATE_ATTRIBUTE, previous)

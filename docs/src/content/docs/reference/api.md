@@ -13,7 +13,7 @@ sidebar:
 ```ts
 lockScroll(options?: ScrollLockLifecycleOptions): () => void
 
-interface ScrollLockLifecycleOptions extends ScrollLockOptions {
+interface ScrollLockLifecycleOptions extends ScrollLockRegionOptions {
   signal?: AbortSignal
 }
 ```
@@ -54,7 +54,7 @@ Pass `signal` to destroy the controller when the signal aborts, even if it is cu
 ```ts
 scrollLock(target: Element | string | Iterable<Element> | ArrayLike<Element>, options?: ScrollLockWatchOptions): ScrollLockController
 
-interface ScrollLockWatchOptions extends ScrollLockOptions {
+interface ScrollLockWatchOptions extends ScrollLockRegionOptions {
   isOpen?: (element: Element) => boolean
 }
 
@@ -140,7 +140,7 @@ The default `isOpen` of `scrollLock`, exported to build on: `isOpen: el => isOpe
 
 ## Types
 
-`ScrollLockOptions`, `ScrollLockLifecycleOptions`, `ScrollLockState`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
+`ScrollLockOptions`, `ScrollLockRegionOptions`, `ScrollLockRegions`, `ScrollLockLifecycleOptions`, `ScrollLockState`, `ScrollLockMode`, `PositionFixed`, `PlatformInfo`, `ScrollLock`, `ScrollLockWatchOptions`, `AutoScrollLockOptions` and `ScrollLockController`.
 
 ## window.ScrollLock
 

@@ -197,6 +197,27 @@ describe('lockScroll (ios)', () => {
     expect(document.getElementById('go')!.style.transform).toBe('')
   })
 
+  it('reveals focused inputs inside the active region without scrolling an outside container', () => {
+    page()
+    syncFrames()
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
+    vi.stubGlobal('visualViewport', { height: 400 })
+    const outside = scroller(0)
+    const inside = document.createElement('div')
+    inside.style.overflow = 'auto'
+    const field = document.createElement('input')
+    inside.append(field)
+    outside.append(inside)
+    field.getBoundingClientRect = () => ({ top: 500, bottom: 540 }) as DOMRect
+    inside.getBoundingClientRect = () => ({ top: 200, bottom: 400 }) as DOMRect
+    outside.getBoundingClientRect = () => ({ top: 0, bottom: 100 }) as DOMRect
+    lockScroll({ allowScroll: inside })
+
+    field.dispatchEvent(new FocusEvent('focus'))
+    expect(inside.scrollTop).toBe(300)
+    expect(outside.scrollTop).toBe(0)
+  })
+
   it('removes a keyboard listener still waiting on release', () => {
     page()
     syncFrames()

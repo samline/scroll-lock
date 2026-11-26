@@ -1,6 +1,6 @@
 {
   "name": "@samline/scroll-lock",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Page scroll locking for modals, drawers and menus: nested locks, scrollbar gap compensation, scroll position restoration and the iOS Safari workaround, for vanilla JavaScript and plain HTML.",
   "keywords": [
     "scroll-lock",
@@ -104,8 +104,8 @@
     "vitest": "^5.0.1"
   },
   "size": {
-    "./dist/index.js": 4000,
-    "./dist/browser/scroll-lock.global.js": 4100
+    "./dist/index.js": 5000,
+    "./dist/browser/scroll-lock.global.js": 5100
   },
   "workspaces": [
     "landing",

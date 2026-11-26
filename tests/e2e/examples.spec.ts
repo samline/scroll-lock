@@ -167,4 +167,57 @@ test.describe('scroll-lock copyable examples', () => {
     await expect(menu).toBeHidden()
     expect(await locked(page)).toBeNull()
   })
+
+  test('scrolls only the top explicit regions, then restores the previous regions', async ({
+    page,
+  }) => {
+    await open(page, 'regions')
+    const checkout = page.getByRole('button', { name: 'Checkout', exact: true })
+    const picker = page.getByRole('button', { name: 'Country picker', exact: true })
+    const order = page.getByRole('region', { name: 'Order' })
+    const delivery = page.getByRole('region', { name: 'Delivery' })
+    const countries = page.getByRole('region', { name: 'Countries' })
+    const position = (region: ReturnType<Page['locator']>) => region.evaluate(el => el.scrollTop)
+
+    await page.evaluate(() => window.scrollTo(0, 240))
+    await checkout.click()
+    await expect.poll(() => locked(page)).toBe('locked')
+    await order.hover()
+    await page.mouse.wheel(0, 140)
+    await expect.poll(() => position(order)).toBeGreaterThan(0)
+    await delivery.press('PageDown')
+    await expect.poll(() => position(delivery)).toBeGreaterThan(0)
+
+    await picker.click()
+    await expect(page.locator('#countries')).toHaveAttribute('data-scroll-lock-state', 'locked')
+    await order.evaluate(el => {
+      el.scrollTop = 0
+    })
+    await order.hover()
+    await page.mouse.wheel(0, 140)
+    await countries.hover()
+    await page.mouse.wheel(0, 140)
+    await expect.poll(() => position(countries)).toBeGreaterThan(0)
+    expect(await position(order)).toBe(0)
+
+    await picker.click()
+    await expect(page.locator('#countries')).toHaveAttribute('data-scroll-lock-state', 'unlocked')
+    await order.hover()
+    await page.mouse.wheel(0, 140)
+    await expect.poll(() => position(order)).toBeGreaterThan(0)
+    await order.evaluate(el => {
+      el.scrollTop = el.scrollHeight
+    })
+    await page.mouse.wheel(0, 240)
+    expect(await page.evaluate(() => window.scrollY)).toBe(240)
+
+    // Removing the lower layer first leaves the picker in control.
+    await picker.click()
+    await expect(page.locator('#countries')).toHaveAttribute('data-scroll-lock-state', 'locked')
+    await checkout.click()
+    await expect(page.locator('#checkout')).toHaveAttribute('data-scroll-lock-state', 'unlocked')
+    expect(await locked(page)).toBe('locked')
+    await picker.click()
+    await expect.poll(() => locked(page)).toBeNull()
+  })
 })

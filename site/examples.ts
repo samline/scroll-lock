@@ -131,6 +131,22 @@ menu.addEventListener('close', () => {
   if (!menu.open) lock.unlock()
 })`
 
+const checkoutScript = `const panels = new Map()
+for (const button of document.querySelectorAll('[data-checkout-panel]')) {
+  const panel = document.getElementById(button.dataset.checkoutPanel)
+  const set = open => {
+    panel.togglePopover(open)
+    button.setAttribute('aria-expanded', String(open))
+  }
+  panels.set(panel.id, set)
+  button.addEventListener('click', () => set(!panel.matches(':popover-open')))
+  panel.querySelector('[data-close-panel]').addEventListener('click', () => {
+    set(false)
+    button.focus({ preventScroll: true })
+  })
+}
+document.querySelector('[data-open-countries]').addEventListener('click', () => panels.get('countries')(true))`
+
 export default [
   {
     id: 'dialog',
@@ -286,6 +302,58 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }`,
       esm: `import { createScrollLock } from '@samline/scroll-lock'
 
 ${animatedScript('')}`,
+    },
+  },
+  {
+    id: 'regions',
+    tab: 'Allowed regions',
+    title: 'Keep checkout lists scrollable while the page is locked',
+    description:
+      'Scroll either checkout list, then open the country picker to give its list priority. Close the picker to restore both checkout lists. Close both panels to scroll the page again.',
+    files: {
+      html: `<div class="checkout-controls" role="group" aria-label="Checkout panels">
+  <button type="button" data-checkout-panel="checkout" aria-controls="checkout" aria-expanded="false">Checkout</button>
+  <button type="button" data-checkout-panel="countries" aria-controls="countries" aria-expanded="false">Country picker</button>
+</div>
+<aside id="checkout" popover="manual" data-scroll-lock data-scroll-lock-allow="#order, #delivery" aria-labelledby="checkout-title">
+  <div class="header"><h2 id="checkout-title">Checkout</h2><button type="button" data-close-panel>Close checkout</button></div>
+  <div class="checkout-columns">
+    <div id="order" class="checkout-list" tabindex="0" role="region" aria-label="Order">
+${paragraphs(12, 'Order item')}
+    </div>
+    <div id="delivery" class="checkout-list" tabindex="0" role="region" aria-label="Delivery">
+${paragraphs(10, 'Delivery option')}
+      <label>Postal code <input autocomplete="postal-code"></label>
+    </div>
+  </div>
+  <button type="button" data-open-countries>Open country picker</button>
+</aside>
+<aside id="countries" popover="manual" data-scroll-lock data-scroll-lock-allow="#country-list" aria-labelledby="countries-title">
+  <div class="header"><h2 id="countries-title">Country picker</h2><button type="button" data-close-panel>Close country picker</button></div>
+  <div id="country-list" class="checkout-list" tabindex="0" role="region" aria-label="Countries">
+    <ul><li>Brazil</li><li>Canada</li><li>France</li><li>Germany</li><li>Japan</li><li>Mexico</li><li>Spain</li><li>United Kingdom</li><li>United States</li></ul>
+  </div>
+</aside>
+${page}`,
+      css: `${pageCss}
+.checkout-controls { position: fixed; inset: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; background: white; }
+.page { padding-top: 4rem; }
+#checkout, #countries { position: fixed; inset: 4rem auto auto 1rem; margin: 0; box-sizing: border-box; padding: 1rem; }
+#checkout { width: min(31rem, calc(100vw - 2rem)); }
+#countries { inset: 4rem 1rem auto auto; width: min(14rem, calc(100vw - 2rem)); }
+.checkout-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.checkout-list { box-sizing: border-box; height: min(10rem, 30dvh); overflow: auto; overscroll-behavior: contain; border: 1px solid #ddd; padding: 0.5rem; }
+.checkout-list li { padding-block: 0.3rem; }
+[data-open-countries] { margin-top: 0.75rem; }
+input { box-sizing: border-box; max-width: 100%; }
+@media (width < 39rem) { #countries { inset-block: auto 1rem; } }`,
+      js: `// The browser bundle watches both panels automatically.
+${checkoutScript}`,
+      esm: `import { autoScrollLock } from '@samline/scroll-lock'
+
+autoScrollLock()
+
+${checkoutScript}`,
     },
   },
 ]

@@ -9,6 +9,8 @@
  * restoration that ignores `scroll-behavior: smooth`. See LICENSE.md.
  */
 
+import { hasScrollRegions, isAllowedScrollContainer } from './regions.js'
+
 // Space kept between a focused input and the software keyboard.
 const KEYBOARD_BUFFER = 24
 
@@ -103,7 +105,7 @@ const scrollIntoView = (target: Element): void => {
   let current: Element | null = target
   while (current && current !== root) {
     const scrollable = scrollParent(current)
-    if (!isPage(scrollable) && scrollable !== current) {
+    if (!isPage(scrollable) && scrollable !== current && isAllowedScrollContainer(scrollable)) {
       const box = scrollable.getBoundingClientRect()
       const rect = current.getBoundingClientRect()
       if (rect.bottom > box.bottom + KEYBOARD_BUFFER) scrollable.scrollTop += rect.top - box.top
@@ -150,6 +152,7 @@ export const preventScrollMobileSafari = (gap: number): Cleanup => {
   }
 
   const onTouchMove = (event: TouchEvent) => {
+    if (hasScrollRegions()) return
     if (isPage(scrollable)) {
       if (event.cancelable) event.preventDefault()
       return

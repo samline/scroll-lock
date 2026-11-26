@@ -2,6 +2,13 @@
 
 All notable changes to this package. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [semver](https://semver.org/).
 
+## [1.2.0] - 2026-11-25
+
+### Added
+
+- `allowScroll` and `data-scroll-lock-allow` restrict scroll gestures to selected regions while locking the page. Explicit policies follow the active layer and restore the previous layer on release.
+- A checkout example with two scrollable columns, an input and a separately mounted country picker.
+
 ## [1.1.0] - 2026-11-25
 
 ### Added

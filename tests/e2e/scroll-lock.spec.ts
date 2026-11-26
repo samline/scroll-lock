@@ -166,4 +166,45 @@ test.describe('on an emulated iPhone', () => {
     // lands a few pixels off; a real device and macOS WebKit return exactly.
     expect(result.restored).toBeLessThanOrEqual(4)
   })
+
+  test('keeps explicit regions usable with the iOS touch workaround', async ({
+    load,
+    browserName,
+  }) => {
+    test.skip(browserName === 'firefox', 'Firefox has no mobile emulation')
+    const page = await load(
+      `<meta name="viewport" content="width=device-width, initial-scale=1">${layout}`,
+      'scroll-lock'
+    )
+    const result = await page.evaluate(() => {
+      const { ScrollLock } = window as Window & {
+        ScrollLock: import('../../src/browser/global').ScrollLockGlobal
+      }
+      const dialog = document.querySelector('dialog')!
+      dialog.showModal()
+      const release = ScrollLock.lockScroll({ allowScroll: '#box' })
+      const pan = (target: Element) => {
+        const send = (type: string, y: number) => {
+          const touches = [{ identifier: 1, clientX: 10, clientY: y, pageY: y }]
+          const event = new Event(type, { bubbles: true, cancelable: true })
+          Object.defineProperties(event, {
+            touches: { value: touches },
+            changedTouches: { value: touches },
+          })
+          return target.dispatchEvent(event)
+        }
+        send('touchstart', 80)
+        return send('touchmove', 40)
+      }
+      const region = dialog.querySelector('#box')!
+      const inside = pan(region)
+      const outside = pan(dialog)
+      region.scrollTop = region.scrollHeight
+      const edge = pan(region)
+      release()
+      dialog.close()
+      return { inside, outside, edge }
+    })
+    expect(result).toEqual({ inside: true, outside: false, edge: false })
+  })
 })
